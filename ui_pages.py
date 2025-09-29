@@ -19,12 +19,7 @@ from utils import (
     corregir_numeracion_markdown, generar_indice_word
 )
 
-# Importamos las funciones de navegación y limpieza desde el app principal
-from app import (
-    go_to_landing, go_to_project_selection, go_to_phase1, go_to_phase1_results,
-    go_to_phase2, go_to_phase3, go_to_phase4, go_to_phase5,
-    back_to_project_selection_and_cleanup
-)
+
 
 # =============================================================================
 #           PÁGINA DE BIENVENIDA / INICIO DE SESIÓN
@@ -869,4 +864,5 @@ def phase_5_page(model):
     with col_nav1:
         st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2:
+
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
