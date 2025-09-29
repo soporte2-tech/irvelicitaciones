@@ -46,6 +46,7 @@ def landing_page():
         st.link_button("🔗 Conectar con Google Drive", auth_url, use_container_width=True, type="primary")
 
 def project_selection_page():
+    from app import go_to_landing, go_to_phase1
     """Página para seleccionar o crear un proyecto en Google Drive."""
     st.markdown("<h3>Selección de Proyecto</h3>", unsafe_allow_html=True)
     st.markdown("Elige un proyecto existente de tu Google Drive o crea uno nuevo para empezar.")
@@ -99,9 +100,8 @@ def project_selection_page():
 # =============================================================================
 
 def phase_1_page(model):
+    from app import handle_full_regeneration, go_to_project_selection, go_to_phase1_results, back_to_project_selection_and_cleanup
     """Página de Fase 1 para gestionar archivos y generar el índice."""
-    # Importación local para evitar dependencias circulares
-    from app import handle_full_regeneration
 
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
@@ -167,9 +167,10 @@ def phase_1_page(model):
     st.button("← Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True, key="back_to_projects")
 
 def phase_1_results_page(model):
+    from app import handle_full_regeneration, go_to_phase1, go_to_phase2
+    from prompts import PROMPT_REGENERACION
     """Página para revisar, regenerar y aceptar el índice."""
     # Importación local para evitar dependencias circulares
-    from app import handle_full_regeneration
     st.markdown("<h3>FASE 1: Revisión de Resultados</h3>", unsafe_allow_html=True)
     st.markdown("Revisa el índice. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
     st.markdown("---")
@@ -264,6 +265,7 @@ def phase_1_results_page(model):
 
 def phase_2_page(model):
     """Centro de mando para la generación de guiones con opciones individuales y en lote."""
+    from app import go_to_phase1, go_to_phase1_results, go_to_phase3
     from prompts import PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL
 
     st.markdown("<h3>FASE 2: Centro de Mando de Guiones</h3>", unsafe_allow_html=True)
@@ -427,6 +429,7 @@ def phase_2_page(model):
 
 def phase_3_page(model):
     """Página interactiva para generar, borrar, descargar y unificar planes de prompts."""
+    from app import go_to_phase1, go_to_phase2, go_to_phase4
     from prompts import PROMPT_DESARROLLO
 
     st.markdown("<h3>FASE 3: Centro de Mando de Prompts</h3>", unsafe_allow_html=True)
@@ -650,6 +653,7 @@ def phase_3_page(model):
 
 def phase_4_page(model):
     """Página para ejecutar el plan de prompts y generar el cuerpo principal del documento Word."""
+    from app import go_to_phase3, go_to_phase5
     st.markdown("<h3>FASE 4: Redacción del Cuerpo del Documento</h3>", unsafe_allow_html=True)
     st.markdown("Ejecuta el plan de prompts para generar el contenido completo de la memoria técnica. Este será el cuerpo principal del documento final.")
     st.markdown("---")
@@ -781,6 +785,7 @@ def phase_5_page(model):
     2. Genera una Introducción estratégica basada en el cuerpo del documento.
     3. Inserta estos dos elementos al principio del borrador intacto de la Fase 4.
     """
+    from app import go_to_phase4, go_to_phase1, back_to_project_selection_and_cleanup
     from prompts import PROMPT_GENERAR_INTRODUCCION
 
     st.markdown("<h3>FASE 5: Ensamblaje del Documento Final</h3>", unsafe_allow_html=True)
@@ -866,3 +871,4 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
