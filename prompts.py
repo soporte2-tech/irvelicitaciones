@@ -323,4 +323,6 @@ Te proporcionaré el texto completo de un borrador. Debes devolver una versión 
     *   Está **ESTRICTAMENTE PROHIBIDO** eliminar párrafos, listas o datos del borrador original. Tu trabajo es **AÑADIR** cohesión, no resumir ni reescribir.
     *   La versión final que generes debe tener una longitud igual o LIGERAMENTE SUPERIOR al texto original, debido a las frases de conexión que añadas.
 
+
 Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
+"""
