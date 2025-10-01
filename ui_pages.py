@@ -653,7 +653,6 @@ def phase_3_page(model):
 
 def phase_4_page(model):
     """Página para ejecutar el plan de prompts y generar el cuerpo principal del documento Word."""
-    from app import go_to_phase3, go_to_phase5
     st.markdown("<h3>FASE 4: Redacción del Cuerpo del Documento</h3>", unsafe_allow_html=True)
     st.markdown("Ejecuta el plan de prompts para generar el contenido completo de la memoria técnica. Este será el cuerpo principal del documento final.")
     st.markdown("---")
@@ -696,50 +695,52 @@ def phase_4_page(model):
                     progress_text = f"Procesando Tarea {i+1}/{len(lista_de_prompts)}: {tarea.get('subapartado_referencia', 'N/A')}"
                     progress_bar.progress((i + 1) / len(lista_de_prompts), text=progress_text)
                     
+                    # --- LÓGICA DE ENCABEZADOS MEJORADA ---
                     apartado_actual = tarea.get("apartado_referencia")
                     subapartado_actual = tarea.get("subapartado_referencia")
-                    
                     if apartado_actual and apartado_actual != ultimo_apartado_escrito:
                         if ultimo_apartado_escrito is not None: documento.add_page_break()
                         documento.add_heading(apartado_actual, level=1)
                         ultimo_apartado_escrito = apartado_actual
-                        ultimo_subapartado_escrito = None
+                        ultimo_subapartado_escrito = None # Resetea el subapartado al cambiar de apartado
                     
                     if subapartado_actual and subapartado_actual != ultimo_subapartado_escrito:
                         documento.add_heading(subapartado_actual, level=2)
                         ultimo_subapartado_escrito = subapartado_actual
-                    
+
                     respuesta_ia_bruta = ""
                     prompt_actual = tarea.get("prompt_para_asistente")
                     
                     if prompt_actual:
                         response = chat_redaccion.send_message(prompt_actual)
                         respuesta_ia_bruta = response.text
-                        time.sleep(1)
-                    
-                    if respuesta_ia_bruta:
-                        patron_html = re.compile(r'```html\s*([\s\S]*?)\s*```|(<div[\s\S]*<\/div>)|(<!DOCTYPE html>[\s\S]*?<\/html>)', re.DOTALL)
-                        match_html = patron_html.search(respuesta_ia_bruta)
-                        
-                        if match_html:
-                            html_puro = next(g for g in match_html.groups() if g is not None)
-                            texto_narrativo_completo = respuesta_ia_bruta[:match_html.start()] + respuesta_ia_bruta[match_html.end():]
-                            texto_limpio = limpiar_respuesta_final(texto_narrativo_completo)
-                            texto_corregido = corregir_numeracion_markdown(texto_limpio)
-                            if texto_corregido:
-                                agregar_markdown_a_word(documento, texto_corregido)
-                            
-                            image_file = html_a_imagen(wrap_html_fragment(html_puro), f"temp_img_{i}.png")
-                            if image_file and os.path.exists(image_file):
-                                documento.add_picture(image_file, width=docx.shared.Inches(6.5))
-                                os.remove(image_file)
-                            else:
-                                documento.add_paragraph("[ERROR AL GENERAR IMAGEN DESDE HTML]")
+                        time.sleep(1) 
+
+                    # ========== INICIO DE LA CORRECCIÓN CLAVE ==========
+                    # Detectamos HTML si el prompt lo indica O si la respuesta empieza con código HTML
+                    es_html = (
+                        "HTML" in tarea.get("prompt_id", "").upper() or 
+                        "VISUAL" in tarea.get("prompt_id", "").upper() or
+                        respuesta_ia_bruta.strip().startswith(('<!DOCTYPE html>', '<div', '<table'))
+                    )
+
+                    if es_html:
+                        # Es un elemento visual: convertir a imagen
+                        html_puro = limpiar_respuesta_final(respuesta_ia_bruta) # Limpiamos por si la IA añade texto extra
+                        image_file = html_a_imagen(wrap_html_fragment(html_puro), f"temp_img_{i}.png")
+                        if image_file and os.path.exists(image_file):
+                            documento.add_picture(image_file, width=docx.shared.Inches(6.5))
+                            os.remove(image_file)
                         else:
-                            texto_limpio = limpiar_respuesta_final(respuesta_ia_bruta)
-                            texto_corregido = corregir_numeracion_markdown(texto_limpio)
-                            if texto_corregido:
-                                agregar_markdown_a_word(documento, texto_corregido)
+                            documento.add_paragraph("[ERROR AL GENERAR IMAGEN DESDE HTML]")
+                    else:
+                        # Es texto narrativo: limpiar y añadir como Markdown
+                        texto_limpio = limpiar_respuesta_final(respuesta_ia_bruta)
+                        texto_corregido = corregir_numeracion_markdown(texto_limpio)
+                        if texto_corregido:
+                            agregar_markdown_a_word(documento, texto_corregido)
+                    # ========== FIN DE LA CORRECCIÓN CLAVE ==========
+
                 generation_successful = True
         except Exception as e:
             st.error(f"Ocurrió un error crítico durante la generación del cuerpo del documento: {e}")
@@ -777,7 +778,7 @@ def phase_4_page(model):
     with col_nav2:
         st.button("Ir a Ensamblaje Final (F5) →", on_click=go_to_phase5, use_container_width=True, type="primary", 
                   disabled=not st.session_state.get("generated_doc_buffer"))
-
+        
 def phase_5_page(model):
     """
     Fase final y segura que ensambla el documento definitivo:
@@ -871,4 +872,5 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
