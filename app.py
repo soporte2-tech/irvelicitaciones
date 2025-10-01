@@ -125,7 +125,7 @@ else:
             st.session_state.drive_service = build_drive_service(credentials)
 
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
     except Exception as e:
         st.error(f"Error en la configuración de servicios. Detalle: {e}")
         st.stop()
@@ -149,4 +149,5 @@ else:
         phase_5_page(model)
     else:
         st.error("Página no reconocida. Volviendo a la selección de proyecto.")
+
         project_selection_page()
