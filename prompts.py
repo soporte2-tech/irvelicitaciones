@@ -233,7 +233,7 @@ Tu única tarea es generar una **NUEVA VERSIÓN MEJORADA** del objeto JSON que i
 Genera únicamente el objeto JSON corregido. No incluyas ningún texto fuera de él.
 """
 
-PROMPT_DESARROLLO = """
+PROMPT_DESARROLLO = PROMPT_DESARROLLO = """
 **SYSTEM DIRECTIVES: NON-NEGOTIABLE RULES FOR OUTPUT GENERATION.**
 **FAILURE TO FOLLOW THESE RULES WILL INVALIDATE THE ENTIRE RESPONSE.**
 
@@ -264,17 +264,25 @@ You are an expert consultant drafting a technical proposal for a public tender. 
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale-1.0"><title>Visual Element</title><style>@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&display=swap');body {{{{ font-family: 'Urbanist', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; padding: 20px; width: 800px; box-sizing: border-box; }}}} .card {{{{ background-color: white; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 25px; width: 100%; max-width: 750px; border-top: 5px solid #0046C6; }}}} h2 {{{{ color: #0046C6; text-align: center; margin-top: 0; font-size: 24px; font-weight: 700; }}}} ul {{{{ list-style-type: none; padding: 0; }}}} li {{{{ display: flex; align-items: center; margin-bottom: 15px; font-size: 16px; color: #333; }}}} li::before {{{{ content: '✔'; color: #32CFAA; font-size: 20px; font-weight: bold; margin-right: 15px; }}}}</style></head><body><div class="card"><h2><!-- TÍTULO AQUÍ --></h2><ul><!-- LISTA DE ELEMENTOS AQUÍ --></ul></div></body></html>
 **OPTION B: MULTI-COLUMN INFOGRAPHIC TEMPLATE (For phases, flowcharts, action areas)**
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale-1.0"><title>Infographic Element</title><style>@import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&display=swap');body {{{{ font-family: 'Urbanist', sans-serif; display: flex; justify-content: center; align-items: center; padding: 20px; background-color: #f8f9fa; width: 800px; box-sizing: border-box; }}}} .container {{{{ background-color: #ffffff; border: 2px dashed #e0e0e0; border-radius: 15px; padding: 25px; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}}} h2 {{{{ color: #0046C6; text-align: center; font-size: 26px; font-weight: 700; margin-bottom: 25px; letter-spacing: -0.5px; }}}} .columns {{{{ display: flex; justify-content: space-around; gap: 20px; }}}} .column {{{{ flex: 1; text-align: center; padding: 15px; border-top: 4px solid; border-radius: 8px; background-color: #fdfdfd; }}}} .column-icon {{{{ width: 30px; height: 30px; border-radius: 50%; margin: 0 auto 15px auto; }}}} .column h3 {{{{ font-size: 16px; font-weight: 600; color: #333; margin-bottom: 10px; }}}} .column ul {{{{ list-style: none; padding: 0; margin: 0; text-align: left; }}}} .column li {{{{ font-size: 13px; color: #555; margin-bottom: 8px; line-height: 1.5; }}}} .color-1 {{{{ border-color: #FBC02D; }}}} .icon-1 {{{{ background-color: #FBC02D; }}}} .color-2 {{{{ border-color: #4CAF50; }}}} .icon-2 {{{{ background-color: #4CAF50; }}}} .color-3 {{{{ border-color: #90CAF9; }}}} .icon-3 {{{{ background-color: #90CAF9; }}}} .color-4 {{{{ border-color: #F44336; }}}} .icon-4 {{{{ background-color: #F44336; }}}}</style></head><body><div class="container"><h2><!-- TÍTULO --></h2><div class="columns"><div class="column color-1"><div class="column-icon icon-1"></div><h3><!-- Título Col 1 --></h3><ul><li><!-- Punto 1 --></li></ul></div><div class="column color-2"><div class="column-icon icon-2"></div><h3><!-- Título Col 2 --></h3><ul><li><!-- Punto 1 --></li></ul></div><div class="column color-3"><div class="column-icon icon-3"></div><h3><!-- Título Col 3 --></h3><ul><li><!-- Punto 1 --></li></ul></div></div></div></body></html>
-**YOUR SPECIFIC TASK (in English, for clarity to the model)**
-You must now generate a JSON object for the following subsection.
-Main Section: "{apartado_titulo}"
-Subsection to Draft: "{subapartado_titulo}"
-Guidelines for this Subsection: "{indicaciones}"
-FINAL OUTPUT FORMAT (STRICT):
+
+---
+## YOUR SPECIFIC TASK (in English, for clarity to the model)
+
+Your goal is to generate a comprehensive plan of prompts for a subsection. Analyze the provided guidelines and decide the best way to present the information. You can, and should, **split the content into multiple parts** if it improves clarity.
+
+For example, you might create:
+1.  An introductory text prompt.
+2.  A visual element (HTML) to summarize key phases or benefits.
+3.  A concluding text prompt with more details.
+
+**Crucial Instruction:** You MUST evaluate if the content for the subsection "{subapartado_titulo}" could be enhanced with a visual summary. If the content involves **phases, steps, key pillars, benefits, or any structured list**, you SHOULD generate one prompt for the explanatory text and a **separate prompt** for an HTML visual element using one of the templates above.
+
+**FINAL OUTPUT FORMAT (STRICT):**
 Your response MUST be ONLY a single, valid JSON object (no ```json fences). It must contain a single key "plan_de_prompts" which is a list of objects. Each object must follow this exact structure:
 {{{{
 "apartado_referencia": "{apartado_titulo}",
 "subapartado_referencia": "{subapartado_titulo}",
-"prompt_id": "A unique ID (e.g., PROMPT_2_1_A). Add '_HTML_VISUAL' if it's an HTML element.",
+"prompt_id": "A unique ID (e.g., PROMPT_2_1_A for text, PROMPT_2_1_B_HTML_VISUAL for a visual). The suffix is critical.",
 "prompt_para_asistente": "The specific and detailed prompt for the assistant to generate the Spanish content, following all system directives."
 }}}}
 """
@@ -324,3 +332,4 @@ Te proporcionaré el texto completo de un borrador. Debes devolver una versión 
 
 Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
 """
+
