@@ -271,7 +271,7 @@ You will use one of the two templates below to create the value for the `prompt_
 
 ---
 ## FINAL JSON OUTPUT STRUCTURE (STRICT)
-
+OUTPUT IN SPANISH, ALWAYS IN SPANISH
 Your response MUST be ONLY a single, valid JSON object structured as follows. You will choose the correct template above for the `prompt_para_asistente` key based on your DECISION-MAKING LOGIC.
 
 {{{{
@@ -323,6 +323,7 @@ Te proporcionaré el texto completo de un borrador. Debes devolver una versión 
 
 Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
 """
+
 
 
 
