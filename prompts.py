@@ -295,9 +295,8 @@ Actúas como un estratega experto en la redacción de propuestas de licitación.
 
 **Ejemplo de inicio:** "El presente proyecto aborda la necesidad de [problema principal del cliente] a través de una solución integral que combina [pilar 1 de la solución] con [pilar 2 de la solución], garantizando [resultado clave para el cliente]."
 """
-# REEMPLAZA TU PROMPT_COHESION_FINAL CON ESTA VERSIÓN
 
-PROMPT_COHESION_FINAL = """
+PROMPT_COHESION_FINAL = PROMPT_COHESION_FINAL = """
 Actúas como un Editor Técnico experto. Tu única misión es mejorar la cohesión y el flujo de un borrador de memoria técnica que te proporcionaré. NO debes reescribir apartados enteros ni eliminar contenido. Tu trabajo es puramente de conexión y pulido.
 
 Te proporcionaré el texto completo de un borrador. Debes devolver una versión mejorada del texto completo aplicando ÚNICAMENTE las siguientes reglas:
@@ -322,7 +321,6 @@ Te proporcionaré el texto completo de un borrador. Debes devolver una versión 
 4.  **REGLA DE ORO INVIOLABLE: NO ELIMINAR CONTENIDO.**
     *   Está **ESTRICTAMENTE PROHIBIDO** eliminar párrafos, listas o datos del borrador original. Tu trabajo es **AÑADIR** cohesión, no resumir ni reescribir.
     *   La versión final que generes debe tener una longitud igual o LIGERAMENTE SUPERIOR al texto original, debido a las frases de conexión que añadas.
-
 
 Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
 """
