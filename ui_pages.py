@@ -437,7 +437,10 @@ def phase_3_page(model):
     st.markdown("---")
 
     # --- SETUP INICIAL Y CARGA DE ÍNDICE ---
-    service = st.session_state.drive_service
+    service = build_drive_service(st.session_state.credentials)
+    if not service:
+        st.error("No se pudo restablecer la conexión con Google Drive. Por favor, refresca la página.")
+        st.stop()
     project_folder_id = st.session_state.selected_project['id']
     docs_app_folder_id = find_or_create_folder(service, "Documentos aplicación", parent_id=project_folder_id)
 
@@ -872,5 +875,6 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
