@@ -233,7 +233,7 @@ Tu única tarea es generar una **NUEVA VERSIÓN MEJORADA** del objeto JSON que i
 Genera únicamente el objeto JSON corregido. No incluyas ningún texto fuera de él.
 """
 
-PROMPT_DESARROLLO = PROMPT_DESARROLLO = """
+PROMPT_DESARROLLO = """
 **SYSTEM DIRECTIVES: NON-NEGOTIABLE RULES FOR OUTPUT GENERATION.**
 **FAILURE TO FOLLOW THESE RULES WILL INVALIDATE THE ENTIRE RESPONSE.**
 
@@ -268,14 +268,12 @@ You are an expert consultant drafting a technical proposal for a public tender. 
 ---
 ## YOUR SPECIFIC TASK (in English, for clarity to the model)
 
-Your goal is to generate a comprehensive plan of prompts for a subsection. Analyze the provided guidelines and decide the best way to present the information. You can, and should, **split the content into multiple parts** if it improves clarity.
+Your goal is to generate a comprehensive plan of prompts for the subsection "{subapartado_titulo}". Your primary objective is to produce **professional, flowing, and narrative prose**, not just a collection of lists.
 
-For example, you might create:
-1.  An introductory text prompt.
-2.  A visual element (HTML) to summarize key phases or benefits.
-3.  A concluding text prompt with more details.
-
-**Crucial Instruction:** You MUST evaluate if the content for the subsection "{subapartado_titulo}" could be enhanced with a visual summary. If the content involves **phases, steps, key pillars, benefits, or any structured list**, you SHOULD generate one prompt for the explanatory text and a **separate prompt** for an HTML visual element using one of the templates above.
+**Crucial Content Generation Principles:**
+1.  **Narrative First:** Prioritize well-written paragraphs that connect ideas logically. Use bullet points and lists sparingly, only when necessary for clarity (e.g., listing specific features or metrics).
+2.  **Strategic Visuals:** Evaluate if a visual element would significantly enhance the reader's understanding. If the content describes a **process, workflow, key phases, or a set of core benefits**, you SHOULD generate a multi-part plan: one prompt for the introductory narrative text, a separate prompt for an HTML visual using a template, and potentially a third prompt for concluding details. Do not create visuals for simple lists.
+3.  **Synthesize, Don't Just List:** Instead of creating separate prompts for every minor detail, create a single, more comprehensive text prompt that instructs the AI to write a cohesive section covering several related points.
 
 **FINAL OUTPUT FORMAT (STRICT):**
 Your response MUST be ONLY a single, valid JSON object (no ```json fences). It must contain a single key "plan_de_prompts" which is a list of objects. Each object must follow this exact structure:
@@ -283,7 +281,7 @@ Your response MUST be ONLY a single, valid JSON object (no ```json fences). It m
 "apartado_referencia": "{apartado_titulo}",
 "subapartado_referencia": "{subapartado_titulo}",
 "prompt_id": "A unique ID (e.g., PROMPT_2_1_A for text, PROMPT_2_1_B_HTML_VISUAL for a visual). The suffix is critical.",
-"prompt_para_asistente": "The specific and detailed prompt for the assistant to generate the Spanish content, following all system directives."
+"prompt_para_asistente": "The specific and detailed prompt for the assistant to generate the Spanish content. The prompt must explicitly ask for **narrative text and well-structured paragraphs**. For Markdown syntax, instruct it to use **double asterisks for bold (`**texto en negrita**`)**."
 }}}}
 """
 
@@ -332,4 +330,5 @@ Te proporcionaré el texto completo de un borrador. Debes devolver una versión 
 
 Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
 """
+
 
