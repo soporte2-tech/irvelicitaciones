@@ -227,52 +227,43 @@ Genera únicamente el objeto JSON corregido. No incluyas ningún texto fuera de 
 """
 
 PROMPT_DESARROLLO = """
-**SYSTEM DIRECTIVES: NON-NEGOTIABLE RULES FOR OUTPUT GENERATION.**
-**OUTPUT LANGUAGE:** Your entire final response MUST be a single, valid JSON object. All text within the JSON must be in **Spanish (castellano)**.
-**FAILURE TO FOLLOW THESE RULES WILL INVALIDATE THE ENTIRE RESPONSE.**
+**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. ALL TEXT WITHIN THE JSON MUST BE IN SPANISH (castellano). YOU ARE A CONTENT ARCHITECT, NOT A CONSULTANT. YOUR JOB IS TO DECONSTRUCT, NOT TO ANALYZE OR EVALUATE.**
 
----
-## YOUR PERSONA AND TASK
+**TASK:**
+You are a silent content architect. You will receive a content draft ("Guion"). Your ONLY task is to break down this draft into a structured JSON plan. This plan will be executed by another AI to write the final text.
 
-You are an expert consultant and prompt engineer. Your task is to analyze the provided draft content ("Guion") for a subsection and create a **plan of prompts (a JSON object)**. This plan will be executed later by another AI.
+**CRITICAL RULES:**
+1.  **NO ANALYSIS:** Do not evaluate the quality of the "Guion". Do not suggest improvements. Simply convert its structure and content into a JSON plan.
+2.  **DECISION LOGIC (TEXT vs. VISUAL):**
+    *   Identify parts of the "Guion" that are descriptive, narrative, or explanatory. These become **"texto"** type prompts.
+    *   Identify parts that describe tables, flowcharts, diagrams, or structured feature lists. These become **"visual"** type prompts.
+3.  **PROMPT TEMPLATES (USE LITERALLY):** You MUST use the following templates for the `prompt_para_asistente` key.
 
----
-## DECISION-MAKING LOGIC (CRITICAL)
+    *   **TEMPLATE FOR TEXT (MARKDOWN):**
+        `"Actúa como un redactor técnico experto y silencioso. Tu única tarea es escribir el contenido solicitado en español castellano. REGLAS ABSOLUTAS: 1. Tu respuesta debe ser ÚNICAMENTE el texto final en formato Markdown. 2. NO ofrezcas opciones ni alternativas. 3. NO expliques los cambios que haces. 4. Empieza directamente con el primer párrafo. AHORA, GENERA EL SIGUIENTE CONTENIDO: [Here you insert the DETAILED description from the 'Guion', for example: 'Un párrafo que explique la metodología Agile-Scrum...']"`
 
-You must analyze the content of the "Guion" and decide if it's best represented as narrative text or as a visual element.
+    *   **TEMPLATE FOR VISUAL (HTML):**
+        `"Actúa como un desarrollador front-end silencioso. Tu única tarea es generar el código HTML solicitado en español castellano. REGLAS ABSOLUTAS: 1. Tu respuesta debe ser ÚNICAMENTE el código HTML completo, empezando con <!DOCTYPE html>. 2. NO incluyas explicaciones, comentarios de código o las etiquetas ```html. AHORA, GENERA EL SIGUIENTE ELEMENTO VISUAL: [Here you insert the description of the visual element from the 'Guion', for example: 'Un diagrama de 3 fases con los títulos X, Y, Z y sus descripciones...']"`
 
-1.  **CHOOSE THE VISUAL PATH (HTML)** if the content is primarily:
-    *   A list of distinct benefits, features, or pillars.
-    *   A process with clear, sequential phases or steps.
-    *   A flowchart or a diagram of components.
-    *   A structure with multiple parallel categories.
+**FINAL JSON OUTPUT STRUCTURE (STRICT):**
+Your response must be a single, valid JSON object containing a list of prompts.
 
-2.  **CHOOSE THE TEXT PATH (MARKDOWN)** for everything else, especially:
-    *   Explanations, descriptions, and narrative paragraphs.
-    *   Content that requires detailed reasoning and connection of ideas.
-
----
-## TEMPLATES FOR `prompt_para_asistente` (USE THESE LITERALLY)
-
-You will use one of the two templates below to create the value for the `prompt_para_asistente` key. You MUST NOT invent your own prompt structure.
-
-**TEMPLATE #1: FOR TEXT (MARKDOWN) OUTPUT**
-`"Actúa como un redactor técnico experto y silencioso. Tu única tarea es escribir el contenido solicitado en español castellano. **REGLAS ABSOLUTAS:** 1. Tu respuesta debe ser ÚNICAMENTE el texto final en formato Markdown. 2. NO ofrezcas opciones ni alternativas. 3. NO expliques los cambios que haces. 4. Empieza directamente con el primer párrafo. **AHORA, GENERA EL SIGUIENTE CONTENIDO:** [Aquí insertas la descripción detallada de lo que debe escribir, ej: 'Un párrafo que explique la metodología Agile-Scrum...']"`
-
-**TEMPLATE #2: FOR VISUAL (HTML) OUTPUT**
-`"Actúa como un desarrollador front-end silencioso. Tu única tarea es generar el código HTML solicitado en español castellano usando la plantilla proporcionada. **REGLAS ABSOLUTAS:** 1. Tu respuesta debe ser ÚNICAMENTE el código HTML completo, empezando con <!DOCTYPE html>. 2. NO incluyas explicaciones, comentarios de código o las etiquetas ```html. **AHORA, GENERA EL SIGUIENTE ELEMENTO VISUAL:** [Aquí insertas la descripción del visual, ej: 'Un diagrama de 3 fases con los títulos X, Y, Z y sus descripciones...']"`
-
----
-## FINAL JSON OUTPUT STRUCTURE (STRICT)
-OUTPUT IN SPANISH, ALWAYS IN SPANISH
-Your response MUST be ONLY a single, valid JSON object structured as follows. You will choose the correct template above for the `prompt_para_asistente` key based on your DECISION-MAKING LOGIC.
-
-{{{{
-"apartado_referencia": "{apartado_titulo}",
-"subapartado_referencia": "{subapartado_titulo}",
-"prompt_id": "A unique ID. Use a suffix like '_TEXT' for text prompts and '_HTML_VISUAL' for visual prompts.",
-"prompt_para_asistente": "[Aquí insertas el contenido COMPLETO de la PLANTILLA #1 o la PLANTILLA #2, rellenando la descripción final]"
-}}}}
+{{
+  "plan_de_prompts": [
+    {{
+      "apartado_referencia": "{apartado_titulo}",
+      "subapartado_referencia": "{subapartado_titulo}",
+      "prompt_id": "A unique ID. Use a suffix like '_TEXT' for text and '_HTML_VISUAL' for visuals.",
+      "prompt_para_asistente": "[Here you insert the FULL content of TEMPLATE FOR TEXT or TEMPLATE FOR VISUAL, filled with the description from the 'Guion']"
+    }},
+    {{
+      "apartado_referencia": "{apartado_titulo}",
+      "subapartado_referencia": "{subapartado_titulo}",
+      "prompt_id": "Another_unique_ID_HTML_VISUAL",
+      "prompt_para_asistente": "[Here you insert the FULL content of TEMPLATE FOR VISUAL, for example, for a table]"
+    }}
+  ]
+}}
 """
 
 PROMPT_GENERAR_INTRODUCCION = """
@@ -303,6 +294,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
