@@ -177,50 +177,36 @@ Te proporcionaré DOS elementos clave:
 """
 
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
-**SYSTEM DIRECTIVE: Your entire final response MUST be in Spanish (castellano). All text you generate must be in Spanish. YOU MUST FOLLOW ALL RULES AND CONSTRAINTS.**
+**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE IN SPANISH. YOU ARE A WRITER, NOT A REVIEWER. WRITE THE CONTENT DIRECTLY. DO NOT EVALUATE, DO NOT GIVE FEEDBACK, DO NOT SUGGEST IMPROVEMENTS. ONLY WRITE THE PROPOSED CONTENT.**
 
-You are a senior bid consultant creating a **one-page executive summary** or **script** for a specific subsection of a technical proposal. Your goal is to provide a clear, concise, and strategic outline for a writer.
+**TASK:**
+Write a detailed content draft for a specific subsection of a technical proposal. Use the provided context to create a practical and compelling text.
 
-**CRITICAL RULES - NON-NEGOTIABLE:**
-1.  **MAXIMUM LENGTH: ONE PAGE (approx. 450 words).** This is a strict limit. Do not exceed it. Your primary goal is brevity and strategic value, not exhaustive detail.
-2.  **OUTPUT FORMAT: SCRIPT / SKELETON.** Do not write long, narrative paragraphs. Use bullet points, short sentences, and a direct, instructional tone. You are creating a plan, not the final text.
-3.  **STRUCTURE:** You MUST use the following two main sections ONLY: "Análisis del Pliego (Qué se debe incluir)" and "Propuesta de Contenido (Esqueleto Estratégico)".
+**CONTEXT PROVIDED TO YOU:**
+1.  **Tender Documents Analysis:** A summary of what must be included in this section.
+2.  **Specific Indications:** Detailed guidelines for this subsection.
+3.  **Supporting Documents:** Additional information if available.
 
-**MANDATORY OUTPUT STRUCTURE:**
+**MANDATORY RULES:**
+1.  **ROLE:** You are a technical writer. Your only job is to write the content as if you were creating the proposal yourself.
+2.  **FORMAT:** Use Markdown for structure. Use headings, bullet points, and paragraphs to present the information clearly.
+3.  **TONE:** Professional, confident, and direct.
+4.  **NO META-COMMENTARY:** Do not write phrases like "This is a strong proposal because..." or "An area for improvement would be...". Directly write the content of the proposal itself. Start directly with the first heading or paragraph.
 
----
+**EXAMPLE OF CORRECT OUTPUT:**
+"### 1.1.1. Diseño y Adecuación del Espacio Físico
 
-### Análisis del Pliego (Qué se debe incluir)
+Para garantizar el cumplimiento de los requisitos espaciales, se presentará un plano detallado en formato CAD que asegura una superficie mínima de 100m². Este espacio se diferenciará en las siguientes áreas funcionales:
+*   **Oficina de información (25m²):** Equipada con 2 puestos de trabajo y una zona de espera.
+*   **Sala de formación (30m²):** Con mobiliario modular para 10-12 personas y proyector interactivo.
+..."
 
-*   **Objetivo Principal:** (Summarize the main goal of this section in one sentence, based on the tender documents).
-*   **Puntos de Valoración Clave:** (List the key evaluation criteria from the tender that apply here, including points if available).
-*   **Requisitos Específicos:** (Use bullet points to list the mandatory items to be included, as specified in the tender).
+**EXAMPLE OF INCORRECT OUTPUT (WHAT YOU MUST AVOID):**
+"Puntos Fuertes: La especificación de metros cuadrados es muy precisa.
+Áreas de Mejora: Se podría añadir una mención a la accesibilidad universal.
+..."
 
----
-
-### Propuesta de Contenido (Esqueleto Estratégico)
-
-*   **Visión General/Enfoque:** (A short, 2-3 sentence paragraph explaining our strategic approach for this section).
-
-*   **Punto Clave 1 - Título Descriptivo:**
-    *   **Acción/Medida Concreta:** (Describe the specific action. Example: "Implementar un CRM Salesforce...").
-    *   **Herramienta/Metodología:** (Name the specific tool. Example: "Salesforce for Startups").
-    *   **Valor Añadido/Justificación:** (Explain briefly why this action meets the tender's requirements and provides value).
-
-*   **Punto Clave 2 - Título Descriptivo:**
-    *   **Acción/Medida Concreta:** (Describe the next action).
-    *   **Herramienta/Metodología:** (Name the tool).
-    *   **Valor Añadido/Justificación:** (Explain the value).
-
-*   **Punto Clave 3 - Título Descriptivo:**
-    *   **Acción/Medida Concreta:** (Describe the third action).
-    *   **Herramienta/Metodología:** (Name the tool).
-    *   **Valor Añadido/Justificación:** (Explain the value).
-
-*   **Elementos Visuales a Incluir:**
-    *   (List any tables, diagrams, or flowcharts that the writer should create. Example: "Tabla resumen de los 6 Bloques de Servicio", "Diagrama conceptual de la Gestión Integral").
-
----
+**NOW, BASED ON THE PROVIDED CONTEXT, WRITE THE CONTENT DRAFT FOR THE SUBSECTION.**
 """
 PROMPT_REGENERACION = """
 Actúas como un editor experto que refina una estructura JSON para una memoria técnica.
@@ -317,6 +303,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
