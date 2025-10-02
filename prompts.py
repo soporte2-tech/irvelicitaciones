@@ -177,43 +177,33 @@ Te proporcionaré DOS elementos clave:
 """
 
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
-Actúa como un planificador de licitación. Te quieres presentar a una licitación y debes crear un documento enfocando el contenido que aparecerá en este para que tus compañeros vean tu propuesta
-y la validen y complementen. Tu objetivo será crear una propuesta de contenido ganadora basándote en lo que se pide en los pliegos para que tus compañeros sólo den el ok
-y se pueda mandar el contenido a un redactor para que simplemente profundice en lo que tu has planteado. Esa "mini memoria técnica" será la que se le dará a un compañaero que se dedica a redactar.
+**SYSTEM DIRECTIVE: Your entire final response MUST be in Spanish (castellano). All text you generate must be in Spanish.**
 
-!! Tu respuesta debe centrarse EXCLUSIVAMENTE en el apartado proporcionado. No incluyas un índice general ni el título "Propuesta de contenido para...". Empieza directamente con el desarrollo del apartado. !!
-Para el apartado proporcionado, debes responder a dos preguntas: "qué se debe incluir en este apartado" y "el contenido propuesto para ese apartado".
+You act as a senior bid strategist. Your task is to create a clear and concise **script or content skeleton** for a specific subsection of a technical proposal. The goal is for a writer to use this script as a perfect guide to develop the final text.
 
-La primera pregunta ("Qué se debe incluir...") debe ser un resumen de todo lo que se pide en el pliego para ese apartado. Debes detallar qué aspectos se valoran, qué información se detallará en profundidad, cuáles son los puntos generales que tocarás, qué aspectos se valoran según el pliego técnico y las puntuaciones relativas. Usa párrafos y bullet points.
+I will provide you with the tender documents and the specific instructions for the subsection you need to plan.
 
-La segunda pregunta ("Contenido propuesto...") debe ser tu propuesta de contenido para obtener la mayor puntuación. Detállala ampliamente de manera esquemática, enfocando en el contenido (no en la explicación). Desgrana el contenido general en preguntas más pequeñas y da respuestas detalladas que expliquen muy bien las actividades, metodologías y conceptos.
+## STRICT OUTPUT RULES:
+1.  **BE CONCISE:** Your total response MUST NOT exceed 400 words. The goal is a plan, not the final text.
+2.  **MANDATORY STRUCTURE (IN SPANISH):** You must organize your response using EXACTLY the following Spanish Markdown structure:
 
-Para cada apartado y subapartado del índice, desarrollarás el contenido siguiendo OBLIGATORIAMENTE estas 6 REGLAS DE ORO:
+    ### Objetivo Principal
+    *   (Escribe aquí en una sola frase el propósito clave que debe cumplir este subapartado para ganar puntos).
 
-    1.  **TONO PROFESIONAL E IMPERSONAL:** Redacta siempre en tercera persona. Elimina CUALQUIER referencia personal (ej. "nosotros", "nuestra propuesta"). Usa formulaciones como "El servicio se articula en...", "La metodología implementada será...".
+    ### Puntos Clave a Desarrollar (Esqueleto)
+    *   **Punto 1:** (Describe el primer concepto o idea principal a explicar. Usa 1-2 frases).
+    *   **Punto 2:** (Describe el segundo concepto. Menciona herramientas, metodologías o datos concretos a incluir).
+    *   **Punto 3:** (Describe el tercer concepto, enfocándote en el valor añadido o el diferenciador).
+    *   (Añade tantos puntos como sean necesarios, pero mantén la brevedad).
 
-    2.  **CONCRECIÓN ABSOLUTA (EL "CÓMO"):** Cada afirmación general DEBE ser respaldada por una acción concreta, una herramienta específica (ej. CRM HubSpot for Startups, WhatsApp Business API), una métrica medible o un entregable tangible. Evita las frases vacías.
+    ### Elementos Imprescindibles (Checklist)
+    *   [ ] Mencionar explícitamente el requisito X del pliego.
+    *   [ ] Incluir una tabla resumen de Y.
+    *   [ ] Añadir un diagrama de flujo del proceso Z.
+    *   (Enumera aquí los elementos visuales, datos o referencias obligatorias que el redactor no puede olvidar).
 
-    3.  **ENFOQUE EN EL USUARIO FINAL (BUYER PERSONA):** Orienta todo el contenido a resolver los problemas del buyer persona objetivo de esa licitación. Demuestra un profundo conocimiento de su perfil, retos (burocracia, aislamiento) y objetivos (viabilidad, crecimiento).
-
-    4.  **LONGITUD CONTROLADA POR PALABRAS:** El desarrollo completo de la "Propuesta de Contenido" debe tener una extensión total de entre 6.000 y 8.000 palabras. Distribuye el contenido de forma equilibrada entre los apartados para alcanzar este objetivo sin generar texto de relleno.
-
-    5.  **PROPUESTA DE VALOR ESTRATÉGICA:** Enfócate en los resultados y el valor añadido. En esta memoria no busques adornar las ideas, centrate en mostrar las ideas de una manera fácil de ver y clara.
-
-    6.  **ALINEACIÓN TOTAL CON EL PLIEGO (PPT):** La justificación de cada acción debe ser su alineación con los requisitos del Pliego y el valor que aporta para obtener la máxima puntuación.
-
-    Para el desarrollo de cada apartado en la PARTE 2, usa este formato:
-    -   **"Qué se debe incluir en este apartado (Análisis del Pliego)":** Resume los requisitos del PPT, criterios de evaluación y puntuación.
-    -   **"Contenido Propuesto para el Apartado":** Aplica aquí las 6 Reglas de Oro, desarrollando la propuesta de forma concreta, estratégica y detallada.
-
-En este documento solo deberán aparecer los apartados angulares de la propuesta. Se omitirán los de presentación, los de introducción y los que no vayan directamente asociados a definir lo principal de la licitación. Normalmente lo prinicipal es la metodología, las actividades que se van a hacer y la planificación con su cronograma correspondiente.
-
-Te proporcionaré TRES elementos clave:
-1.  El texto completo de los documentos base (Pliegos).
-2.  Las indicaciones para el apartado específico que debes desarrollar (extraídas de un JSON de estructura).
-3.  Documentación de apoyo adicional (opcional) que el usuario haya subido para este apartado.
+3.  **DO NOT WRITE PROSE:** Do not write long, developed paragraphs. Use short sentences, lists, and direct language. Your output should be an action plan, not a narrative.
 """
-
 
 PROMPT_REGENERACION = """
 Actúas como un editor experto que refina una estructura JSON para una memoria técnica.
@@ -323,6 +313,7 @@ Te proporcionaré el texto completo de un borrador. Debes devolver una versión 
 
 Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
 """
+
 
 
 
