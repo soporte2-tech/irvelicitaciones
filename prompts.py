@@ -177,32 +177,33 @@ Te proporcionaré DOS elementos clave:
 """
 
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
-**SYSTEM DIRECTIVE: Your entire final response MUST be in Spanish (castellano). All text you generate must be in Spanish.**
+**SYSTEM DIRECTIVE: Your entire response MUST be a single, valid JSON object. All text within the JSON must be in Spanish (castellano).**
 
-You act as a senior bid strategist. Your task is to create a clear and concise **script or content skeleton** for a specific subsection of a technical proposal. The goal is for a writer to use this script as a perfect guide to develop the final text.
+You are an expert consultant and prompt engineer. Your task is to analyze the provided draft content ("Guion") for a subsection and create a **JSON execution plan**. This plan will be used to generate the final content, breaking it down into logical text blocks and visual elements.
 
-I will provide you with the tender documents and the specific instructions for the subsection you need to plan.
+## DECISION-MAKING LOGIC (CRITICAL)
+1.  **CHOOSE VISUAL (HTML)** for: Processes with clear steps, flowcharts, lists of features/pillars, or diagrams.
+2.  **CHOOSE TEXT (MARKDOWN)** for: Explanations, descriptions, narrative paragraphs, and detailed reasoning.
 
-## STRICT OUTPUT RULES:
-1.  **BE CONCISE:** Your total response MUST NOT exceed 400 words. The goal is a plan, not the final text.
-2.  **MANDATORY STRUCTURE (IN SPANISH):** You must organize your response using EXACTLY the following Spanish Markdown structure:
+## FINAL JSON OUTPUT STRUCTURE (STRICT)
+Your response MUST be ONLY a single, valid JSON object structured as follows. Break down the content into as many parts as necessary to create a logical flow.
 
-    ### Objetivo Principal
-    *   (Escribe aquí en una sola frase el propósito clave que debe cumplir este subapartado para ganar puntos).
-
-    ### Puntos Clave a Desarrollar (Esqueleto)
-    *   **Punto 1:** (Describe el primer concepto o idea principal a explicar. Usa 1-2 frases).
-    *   **Punto 2:** (Describe el segundo concepto. Menciona herramientas, metodologías o datos concretos a incluir).
-    *   **Punto 3:** (Describe el tercer concepto, enfocándote en el valor añadido o el diferenciador).
-    *   (Añade tantos puntos como sean necesarios, pero mantén la brevedad).
-
-    ### Elementos Imprescindibles (Checklist)
-    *   [ ] Mencionar explícitamente el requisito X del pliego.
-    *   [ ] Incluir una tabla resumen de Y.
-    *   [ ] Añadir un diagrama de flujo del proceso Z.
-    *   (Enumera aquí los elementos visuales, datos o referencias obligatorias que el redactor no puede olvidar).
-
-3.  **DO NOT WRITE PROSE:** Do not write long, developed paragraphs. Use short sentences, lists, and direct language. Your output should be an action plan, not a narrative.
+{
+  "partes_contenido": [
+    {
+      "tipo": "texto",
+      "descripcion_detallada": "Un párrafo introductorio que explique la importancia de la metodología X, mencionando su alineación con los objetivos del pliego."
+    },
+    {
+      "tipo": "visual",
+      "descripcion_detallada": "Un diagrama de flujo en HTML con 4 fases claras: 'Fase 1: Análisis', 'Fase 2: Diseño', 'Fase 3: Implementación', 'Fase 4: Soporte'. Cada fase debe tener una breve descripción debajo."
+    },
+    {
+      "tipo": "texto",
+      "descripcion_detallada": "Un párrafo de cierre que resuma los beneficios de usar esta metodología, enfocándose en la mitigación de riesgos y la eficiencia."
+    }
+  ]
+}
 """
 
 PROMPT_REGENERACION = """
@@ -285,33 +286,20 @@ Actúas como un estratega experto en la redacción de propuestas de licitación.
 **Ejemplo de inicio:** "El presente proyecto aborda la necesidad de [problema principal del cliente] a través de una solución integral que combina [pilar 1 de la solución] con [pilar 2 de la solución], garantizando [resultado clave para el cliente]."
 """
 
-PROMPT_COHESION_FINAL = PROMPT_COHESION_FINAL = """
-Actúas como un Editor Técnico experto. Tu única misión es mejorar la cohesión y el flujo de un borrador de memoria técnica que te proporcionaré. NO debes reescribir apartados enteros ni eliminar contenido. Tu trabajo es puramente de conexión y pulido.
+PROMPT_COHESION_FINAL = """
+Actúas como un Editor Técnico experto. Tu única misión es mejorar la cohesión y el flujo de un borrador de memoria técnica. NO debes reescribir apartados enteros ni eliminar contenido. Tu trabajo es puramente de conexión y pulido.
 
-Te proporcionaré el texto completo de un borrador. Debes devolver una versión mejorada del texto completo aplicando ÚNICAMENTE las siguientes reglas:
+Te proporcionaré el texto completo del borrador. Debes devolver una versión mejorada aplicando ÚNICAMENTE las siguientes reglas:
 
-1.  **AÑADIR REFERENCIAS CRUZADAS (TAREA PRINCIPAL):**
-    *   Lee el documento completo para entender las conexiones.
-    *   Cuando un apartado posterior mencione un concepto, herramienta o equipo ya introducido, AÑADE una referencia explícita.
-    *   **Ejemplos de frases que DEBES AÑADIR:**
-        *   "Para llevar a cabo estas tareas, se utilizará la metodología Agile-Scrum **descrita en el apartado 1.1**."
-        *   "El seguimiento se realizará a través de Jira, **la herramienta seleccionada para la gestión del proyecto (ver sección 1.5)**."
-        *   "Este enfoque mitiga los riesgos **identificados previamente en el análisis DAFO**."
+1.  **AÑADIR REFERENCIAS CRUZADAS (TAREA PRINCIPAL):** Cuando un apartado mencione un concepto ya introducido, AÑADE una referencia explícita. Ejemplos: "...se utilizará la metodología Agile-Scrum **descrita en el apartado 1.1**.", "...a través de Jira, **la herramienta seleccionada para la gestión (ver sección 1.5)**."
 
-2.  **MEJORAR TRANSICIONES:**
-    *   Añade frases o párrafos cortos al inicio de los apartados para crear un puente lógico con el anterior.
-    *   **Ejemplos de transiciones a AÑADIR:**
-        *   (Al inicio del Plan de Trabajo): "**Una vez definida la metodología, el siguiente paso es detallar el plan de trabajo...**"
-        *   (Al inicio del Equipo): "**Para ejecutar el plan de trabajo descrito, se ha conformado el siguiente equipo multidisciplinar...**"
+2.  **MEJORAR TRANSICIONES:** Añade frases cortas al inicio de los apartados para crear un puente lógico con el anterior. Ejemplo: "**Una vez definida la metodología, el siguiente paso es detallar el plan de trabajo...**"
 
-3.  **UNIFICAR TERMINOLOGÍA:**
-    *   Detecta inconsistencias (ej: "stakeholders" y "partes interesadas") y unifica al término más apropiado y profesional (preferiblemente en español).
+3.  **UNIFICAR TERMINOLOGÍA:** Detecta inconsistencias (ej: "stakeholders" y "partes interesadas") y unifica al término más apropiado.
 
-4.  **REGLA DE ORO INVIOLABLE: NO ELIMINAR CONTENIDO.**
-    *   Está **ESTRICTAMENTE PROHIBIDO** eliminar párrafos, listas o datos del borrador original. Tu trabajo es **AÑADIR** cohesión, no resumir ni reescribir.
-    *   La versión final que generes debe tener una longitud igual o LIGERAMENTE SUPERIOR al texto original, debido a las frases de conexión que añadas.
+4.  **REGLA DE ORO: NO ELIMINAR CONTENIDO.** Está **ESTRICTAMENTE PROHIBIDO** eliminar párrafos o datos del original. Tu trabajo es **AÑADIR** cohesión. La versión final debe ser LIGERAMENTE MÁS LARGA que la original.
 
-Genera únicamente el texto completo y mejorado en formato Markdown. No incluyas comentarios sobre los cambios.
+Genera únicamente el texto completo y mejorado en formato Markdown.
 """
 
 
