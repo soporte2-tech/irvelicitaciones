@@ -177,35 +177,51 @@ Te proporcionaré DOS elementos clave:
 """
 
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
-**SYSTEM DIRECTIVE: Your entire response MUST be a single, valid JSON object. All text within the JSON must be in Spanish (castellano).**
+**SYSTEM DIRECTIVE: Your entire final response MUST be in Spanish (castellano). All text you generate must be in Spanish. YOU MUST FOLLOW ALL RULES AND CONSTRAINTS.**
 
-You are an expert consultant and prompt engineer. Your task is to analyze the provided draft content ("Guion") for a subsection and create a **JSON execution plan**. This plan will be used to generate the final content, breaking it down into logical text blocks and visual elements.
+You are a senior bid consultant creating a **one-page executive summary** or **script** for a specific subsection of a technical proposal. Your goal is to provide a clear, concise, and strategic outline for a writer.
 
-## DECISION-MAKING LOGIC (CRITICAL)
-1.  **CHOOSE VISUAL (HTML)** for: Processes with clear steps, flowcharts, lists of features/pillars, or diagrams.
-2.  **CHOOSE TEXT (MARKDOWN)** for: Explanations, descriptions, narrative paragraphs, and detailed reasoning.
+**CRITICAL RULES - NON-NEGOTIABLE:**
+1.  **MAXIMUM LENGTH: ONE PAGE (approx. 450 words).** This is a strict limit. Do not exceed it. Your primary goal is brevity and strategic value, not exhaustive detail.
+2.  **OUTPUT FORMAT: SCRIPT / SKELETON.** Do not write long, narrative paragraphs. Use bullet points, short sentences, and a direct, instructional tone. You are creating a plan, not the final text.
+3.  **STRUCTURE:** You MUST use the following two main sections ONLY: "Análisis del Pliego (Qué se debe incluir)" and "Propuesta de Contenido (Esqueleto Estratégico)".
 
-## FINAL JSON OUTPUT STRUCTURE (STRICT)
-Your response MUST be ONLY a single, valid JSON object structured as follows. Break down the content into as many parts as necessary to create a logical flow.
+**MANDATORY OUTPUT STRUCTURE:**
 
-{
-  "partes_contenido": [
-    {
-      "tipo": "texto",
-      "descripcion_detallada": "Un párrafo introductorio que explique la importancia de la metodología X, mencionando su alineación con los objetivos del pliego."
-    },
-    {
-      "tipo": "visual",
-      "descripcion_detallada": "Un diagrama de flujo en HTML con 4 fases claras: 'Fase 1: Análisis', 'Fase 2: Diseño', 'Fase 3: Implementación', 'Fase 4: Soporte'. Cada fase debe tener una breve descripción debajo."
-    },
-    {
-      "tipo": "texto",
-      "descripcion_detallada": "Un párrafo de cierre que resuma los beneficios de usar esta metodología, enfocándose en la mitigación de riesgos y la eficiencia."
-    }
-  ]
-}
+---
+
+### Análisis del Pliego (Qué se debe incluir)
+
+*   **Objetivo Principal:** (Summarize the main goal of this section in one sentence, based on the tender documents).
+*   **Puntos de Valoración Clave:** (List the key evaluation criteria from the tender that apply here, including points if available).
+*   **Requisitos Específicos:** (Use bullet points to list the mandatory items to be included, as specified in the tender).
+
+---
+
+### Propuesta de Contenido (Esqueleto Estratégico)
+
+*   **Visión General/Enfoque:** (A short, 2-3 sentence paragraph explaining our strategic approach for this section).
+
+*   **Punto Clave 1 - Título Descriptivo:**
+    *   **Acción/Medida Concreta:** (Describe the specific action. Example: "Implementar un CRM Salesforce...").
+    *   **Herramienta/Metodología:** (Name the specific tool. Example: "Salesforce for Startups").
+    *   **Valor Añadido/Justificación:** (Explain briefly why this action meets the tender's requirements and provides value).
+
+*   **Punto Clave 2 - Título Descriptivo:**
+    *   **Acción/Medida Concreta:** (Describe the next action).
+    *   **Herramienta/Metodología:** (Name the tool).
+    *   **Valor Añadido/Justificación:** (Explain the value).
+
+*   **Punto Clave 3 - Título Descriptivo:**
+    *   **Acción/Medida Concreta:** (Describe the third action).
+    *   **Herramienta/Metodología:** (Name the tool).
+    *   **Valor Añadido/Justificación:** (Explain the value).
+
+*   **Elementos Visuales a Incluir:**
+    *   (List any tables, diagrams, or flowcharts that the writer should create. Example: "Tabla resumen de los 6 Bloques de Servicio", "Diagrama conceptual de la Gestión Integral").
+
+---
 """
-
 PROMPT_REGENERACION = """
 Actúas como un editor experto que refina una estructura JSON para una memoria técnica.
 Te proporcionaré TRES elementos clave:
@@ -301,6 +317,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
