@@ -513,7 +513,7 @@ def phase_2_page(model):
     with col_nav1:
         st.button("← Volver a Revisión de Índice (F1)", on_click=go_to_phase1_results, use_container_width=True)
     with col_nav2:
-    st.button("Ir a Plan de Prompts (F3) →", on_click=go_to_phase3, use_container_width=True)
+        st.button("Ir a Plan de Prompts (F3) →", on_click=go_to_phase3, use_container_width=True)
 
 def phase_3_page(model):
     """Página interactiva para generar, borrar, descargar y unificar planes de prompts."""
@@ -963,6 +963,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
