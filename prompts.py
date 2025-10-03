@@ -180,36 +180,51 @@ Te proporcionaré DOS elementos clave:
 """
 
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
-**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE IN SPANISH. YOU ARE A WRITER, NOT A REVIEWER. WRITE THE CONTENT DIRECTLY. DO NOT EVALUATE, DO NOT GIVE FEEDBACK, DO NOT SUGGEST IMPROVEMENTS. ONLY WRITE THE PROPOSED CONTENT.**
+**SYSTEM DIRECTIVE: TU RESPUESTA DEBE SER EN ESPAÑOL. NO ERES UN REDACTOR, ERES UN PLANIFICADOR. NO ESCRIBAS CONTENIDO FINAL, CREA UN ESQUEMA DE TRABAJO.**
 
 **TASK:**
-Write a detailed content draft for a specific subsection of a technical proposal. Use the provided context to create a practical and compelling text.
+Crear un **esquema de guion conciso y estructurado** para un subapartado de una memoria técnica. Tu salida debe ser una guía para un redactor, no el texto final.
 
 **CONTEXT PROVIDED TO YOU:**
-1.  **Tender Documents Analysis:** A summary of what must be included in this section.
-2.  **Specific Indications:** Detailed guidelines for this subsection.
-3.  **Supporting Documents:** Additional information if available.
+1.  **Análisis de Pliegos:** Resumen de lo que se debe incluir.
+2.  **Indicaciones Específicas:** Directrices detalladas para este subapartado.
+3.  **Documentación de Apoyo:** Información adicional si está disponible.
 
 **MANDATORY RULES:**
-1.  **ROLE:** You are a technical writer. Your only job is to write the content as if you were creating the proposal yourself.
-2.  **FORMAT:** Use Markdown for structure. Use headings, bullet points, and paragraphs to present the information clearly.
-3.  **TONE:** Professional, confident, and direct.
-4.  **NO META-COMMENTARY:** Do not write phrases like "This is a strong proposal because..." or "An area for improvement would be...". Directly write the content of the proposal itself. Start directly with the first heading or paragraph.
+1.  **ROLE:** Eres un **Planificador de Contenidos Estratégico**. Tu único trabajo es desglosar el contenido en puntos clave, preguntas y requisitos. **Está prohibido redactar párrafos narrativos.**
+2.  **FORMAT:** Usa Markdown exclusivamente con estos elementos:
+    -   Títulos (`###`).
+    -   Listas con viñetas (`*` o `-`) para ideas, datos y requisitos.
+    -   Listas numeradas para preguntas clave que el redactor debe responder.
+3.  **TONE:** Telegráfico, directo y funcional.
+4.  **NO META-COMMENTARY:** No evalúes el material. Simplemente extráelo y organízalo en el esquema.
 
-**EXAMPLE OF CORRECT OUTPUT:**
+**EXAMPLE OF CORRECT OUTPUT (El formato que DEBES seguir):**
+"### Guion para: 1.1.1. Diseño y Adecuación del Espacio Físico
+
+**Requisitos Clave del Pliego:**
+*   Superficie mínima: 100m² (Ref: Pliego, Anexo II, pág. 5).
+*   Formato de entrega: Plano detallado en CAD.
+*   Diferenciación de áreas funcionales obligatoria.
+
+**Preguntas a Resolver por el Redactor:**
+1.  ¿Cómo se garantiza la accesibilidad universal según la normativa vigente?
+2.  ¿Qué sistema de climatización y ventilación se instalará?
+3.  ¿Se incluirá un render 3D del espacio además del plano CAD?
+
+**Puntos a Desarrollar:**
+*   Describir el área de "Oficina de información" (25m², 2 puestos, zona espera).
+*   Detallar la "Sala de formación" (30m², mobiliario modular, proyector interactivo).
+*   Mencionar brevemente el cumplimiento de normativas de seguridad y evacuación.
+"
+
+**EXAMPLE OF INCORRECT OUTPUT (Lo que DEBES EVITAR):**
 "### 1.1.1. Diseño y Adecuación del Espacio Físico
 
-Para garantizar el cumplimiento de los requisitos espaciales, se presentará un plano detallado en formato CAD que asegura una superficie mínima de 100m². Este espacio se diferenciará en las siguientes áreas funcionales:
-*   **Oficina de información (25m²):** Equipada con 2 puestos de trabajo y una zona de espera.
-*   **Sala de formación (30m²):** Con mobiliario modular para 10-12 personas y proyector interactivo.
-..."
+Para garantizar el cumplimiento de los requisitos espaciales, se presentará un plano detallado en formato CAD que asegura una superficie mínima de 100m². Este espacio se diferenciará en..."
+(Esto es incorrecto porque es un párrafo redactado).
 
-**EXAMPLE OF INCORRECT OUTPUT (WHAT YOU MUST AVOID):**
-"Puntos Fuertes: La especificación de metros cuadrados es muy precisa.
-Áreas de Mejora: Se podría añadir una mención a la accesibilidad universal.
-..."
-
-**NOW, BASED ON THE PROVIDED CONTEXT, WRITE THE CONTENT DRAFT FOR THE SUBSECTION.**
+**AHORA, BASÁNDOTE EN EL CONTEXTO PROPORCIONADO, CREA EL ESQUEMA DE GUION PARA EL SUBAPARTADO.**
 """
 PROMPT_REGENERACION = """
 Actúas como un editor experto que refina una estructura JSON para una memoria técnica.
@@ -297,6 +312,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
