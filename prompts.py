@@ -104,7 +104,8 @@ Para crear la estructura, seguirás estos pasos:
 2.  **CLAVES PRINCIPALES FIJAS:** El objeto JSON DEBE contener dos claves de nivel superior y solo dos: "estructura_memoria" y "matices_desarrollo".
 3.  **NUMERACIÓN JERÁRQUICA:** Para CADA apartado y subapartado, DEBES anteponer su numeración correspondiente (ej: "1. Título", "1.1. Subtítulo", "1.2. Subtítulo", "2. Otro Título"). Usa solo números, nunca letras.
 4.  **TÍTULOS FIELES AL PLIEGO:** Utiliza los títulos y la terminología exactos de los Pliegos para los apartados y subapartados. Si el pliego no proporciona un título claro para un grupo de requisitos, puedes crear un título descriptivo y lógico.
-5.  **CONTENIDO DE "matices_desarrollo":** Esta sección debe ser exhaustiva. Para CADA subapartado, las "indicaciones" deben incluir OBLIGATORIAMENTE:
+5. ** NO INCLUIR SUB SUB APARTADOS ** No incluyas sub sub apartados tipo 1.1.1 , 1.1.2 ... , eso simplemente se vería como 1.1
+6.  **CONTENIDO DE "matices_desarrollo":** Esta sección debe ser exhaustiva. Para CADA subapartado, las "indicaciones" deben incluir OBLIGATORIAMENTE:
     -   **Puntuación y Relevancia:** Menciona explícitamente cuántos puntos vale el criterio principal asociado y por qué este subapartado es crucial para obtenerlos.
     -   **Longitud Estimada:** Propón una longitud en páginas o palabras. Si el pliego no lo especifica, haz una estimación razonable basada en la importancia y puntuación del apartado. NUNCA digas que no está especificado.
     -   **Contenido Detallado:** Explica qué información específica del pliego se debe desarrollar aquí.
@@ -295,6 +296,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
