@@ -385,7 +385,7 @@ def phase_2_page(model):
                 contexto_para_gpt += f"**Inicio del documento: {file_info['name']}**\n{texto_extraido}\n**Fin del documento: {file_info['name']}**\n\n"
 
             response = client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-4.1-mini",
                 messages=[
                     {"role": "system", "content": PROMPT_GPT_TABLA_PLANIFICACION},
                     {"role": "user", "content": contexto_para_gpt}
@@ -946,6 +946,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
