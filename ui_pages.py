@@ -525,7 +525,7 @@ def phase_3_page(model):
     st.markdown("---")
 
     # --- SETUP INICIAL Y CARGA DE ÍNDICE ---
-    service = build_drive_service(st.session_state.credentials)
+    service = st.session_state.drive_service
     if not service:
         st.error("No se pudo restablecer la conexión con Google Drive. Por favor, refresca la página.")
         st.stop()
@@ -963,6 +963,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
