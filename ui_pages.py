@@ -743,6 +743,7 @@ def phase_3_page(model):
 
 def phase_4_page(model):
     """Página para ejecutar el plan de prompts y generar el cuerpo principal del documento Word."""
+    from app import go_to_phase3, go_to_phase5
     st.markdown("<h3>FASE 4: Redacción del Cuerpo del Documento</h3>", unsafe_allow_html=True)
     st.markdown("Ejecuta el plan de prompts para generar el contenido completo de la memoria técnica. Este será el cuerpo principal del documento final.")
     st.markdown("---")
@@ -962,6 +963,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
