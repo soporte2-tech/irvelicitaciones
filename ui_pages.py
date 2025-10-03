@@ -596,8 +596,7 @@ def phase_3_page(model):
             
             json_limpio_str = limpiar_respuesta_json(response.text)
             if json_limpio_str:
-                json_sanitizado = sanitize_json_string(json_limpio_str)
-                plan_parcial_obj = json.loads(json_sanitizado)
+                plan_parcial_obj = json.loads(json_limpio_str)
                 json_bytes = json.dumps(plan_parcial_obj, indent=2, ensure_ascii=False).encode('utf-8')
                 
                 mock_file_obj = io.BytesIO(json_bytes)
@@ -963,6 +962,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
