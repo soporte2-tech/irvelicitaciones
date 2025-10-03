@@ -273,9 +273,6 @@ def phase_2_page(model):
     from prompts import PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL
 
     # =================== [ CONTROL PARA PRUEBAS ] ===================
-    # Cambia esta variable para elegir el motor de generación
-    # True  = Usa el nuevo prompt y la API de OpenAI (GPT-4o) para generar esquemas.
-    # False = Usa el prompt original y la API de Google (Gemini) para generar borradores.
     USE_GPT_MODEL = True
     # ================================================================
 
@@ -320,60 +317,54 @@ def phase_2_page(model):
     # --- FUNCIONES DE ACCIÓN INTERNAS (AMBAS DISPONIBLES) ---
 
     def ejecutar_generacion_con_gemini(model, titulo, indicaciones_completas, show_toast=True):
-    """
-    Genera el borrador de un subapartado usando el modelo de Gemini.
-    MODIFICADO: Acepta el objeto 'model' como argumento para evitar problemas de scope.
-    """
-    # --- El resto de la función es idéntico a la tuya ---
-    nombre_limpio = re.sub(r'[\\/*?:"<>|]', "", titulo)
-    nombre_archivo = nombre_limpio + ".docx"
-    try:
-        # Estas variables service y project_folder_id son tomadas del scope de phase_2_page
-        service = st.session_state.drive_service
-        project_folder_id = st.session_state.selected_project['id']
-        
-        guiones_folder_id = find_or_create_folder(service, "Guiones de Subapartados", parent_id=project_folder_id)
-        subapartado_guion_folder_id = find_or_create_folder(service, nombre_limpio, parent_id=guiones_folder_id)
-        pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
-        pliegos_en_drive = get_files_in_project(service, pliegos_folder_id)
-        
-        contenido_ia = [PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL]
-        contenido_ia.append("--- INDICACIONES PARA ESTE APARTADO ---\n" + json.dumps(indicaciones_completas, indent=2, ensure_ascii=False))
-        
-        for file_info in pliegos_en_drive:
-            file_content_bytes = download_file_from_drive(service, file_info['id'])
-            contenido_ia.append({"mime_type": file_info['mimeType'], "data": file_content_bytes.getvalue()})
+        """
+        Genera el borrador de un subapartado usando el modelo de Gemini.
+        """
+        nombre_limpio = re.sub(r'[\\/*?:"<>|]', "", titulo)
+        nombre_archivo = nombre_limpio + ".docx"
+        try:
+            service = st.session_state.drive_service
+            project_folder_id = st.session_state.selected_project['id']
             
-        doc_extra_key = f"upload_{titulo}"
-        if doc_extra_key in st.session_state and st.session_state[doc_extra_key]:
-            for uploaded_file in st.session_state[doc_extra_key]:
-                contenido_ia.append("--- DOCUMENTACIÓN DE APOYO ADICIONAL ---\n")
-                contenido_ia.append({"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()})
-                upload_file_to_drive(service, uploaded_file, subapartado_guion_folder_id)
+            guiones_folder_id = find_or_create_folder(service, "Guiones de Subapartados", parent_id=project_folder_id)
+            subapartado_guion_folder_id = find_or_create_folder(service, nombre_limpio, parent_id=guiones_folder_id)
+            pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
+            pliegos_en_drive = get_files_in_project(service, pliegos_folder_id)
+            
+            contenido_ia = [PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL]
+            contenido_ia.append("--- INDICACIONES PARA ESTE APARTADO ---\n" + json.dumps(indicaciones_completas, indent=2, ensure_ascii=False))
+            
+            for file_info in pliegos_en_drive:
+                file_content_bytes = download_file_from_drive(service, file_info['id'])
+                contenido_ia.append({"mime_type": file_info['mimeType'], "data": file_content_bytes.getvalue()})
                 
-        # Ahora 'model' es la variable que se pasó a la función, no una global
-        response = model.generate_content(contenido_ia)
+            doc_extra_key = f"upload_{titulo}"
+            if doc_extra_key in st.session_state and st.session_state[doc_extra_key]:
+                for uploaded_file in st.session_state[doc_extra_key]:
+                    contenido_ia.append("--- DOCUMENTACIÓN DE APOYO ADICIONAL ---\n")
+                    contenido_ia.append({"mime_type": uploaded_file.type, "data": uploaded_file.getvalue()})
+                    upload_file_to_drive(service, uploaded_file, subapartado_guion_folder_id)
+                    
+            response = model.generate_content(contenido_ia)
+            
+            documento = docx.Document()
+            agregar_markdown_a_word(documento, response.text)
+            doc_io = io.BytesIO()
+            documento.save(doc_io)
+            word_file_obj = io.BytesIO(doc_io.getvalue())
+            word_file_obj.name = nombre_archivo
+            word_file_obj.type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            upload_file_to_drive(service, word_file_obj, subapartado_guion_folder_id)
+            
+            if show_toast: 
+                st.toast(f"Borrador (Gemini) para '{titulo}' generado y guardado.")
+            return True
         
-        documento = docx.Document()
-        agregar_markdown_a_word(documento, response.text)
-        doc_io = io.BytesIO()
-        documento.save(doc_io)
-        word_file_obj = io.BytesIO(doc_io.getvalue())
-        word_file_obj.name = nombre_archivo
-        word_file_obj.type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        upload_file_to_drive(service, word_file_obj, subapartado_guion_folder_id)
-        
-        if show_toast: 
-            st.toast(f"Borrador (Gemini) para '{titulo}' generado y guardado.")
-        return True
-    
-    except Exception as e: 
-        st.error(f"Error al generar con Gemini para '{titulo}': {e}")
-        return False
+        except Exception as e: 
+            st.error(f"Error al generar con Gemini para '{titulo}': {e}")
+            return False
         
     def ejecutar_generacion_con_gpt(titulo, indicaciones_completas, show_toast=True):
-        from openai import OpenAI
-        from prompts import PROMPT_GPT_TABLA_PLANIFICACION
         try:
             client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
         except Exception:
@@ -405,7 +396,7 @@ def phase_2_page(model):
                 contexto_para_gpt += f"**Inicio del documento: {file_info['name']}**\n{texto_extraido}\n**Fin del documento: {file_info['name']}**\n\n"
 
             response = client.chat.completions.create(
-                model="gpt-4.1-mini",
+                model="gpt-4o-mini", # Usando el modelo más reciente y económico
                 messages=[
                     {"role": "system", "content": PROMPT_GPT_TABLA_PLANIFICACION},
                     {"role": "user", "content": contexto_para_gpt}
@@ -465,7 +456,9 @@ def phase_2_page(model):
                     if USE_GPT_MODEL:
                         ejecutar_generacion_con_gpt(titulo, matiz_a_generar, show_toast=False)
                     else:
-                        ejecutar_generacion_con_gemini(titulo, matiz_a_generar, show_toast=False)
+                        # <<< CORRECCIÓN AQUÍ 1 de 2 >>>
+                        # Añadimos 'model' como primer argumento
+                        ejecutar_generacion_con_gemini(model, titulo, matiz_a_generar, show_toast=False)
                 progress_bar.progress(1.0, text="¡Generación en lote completada!")
                 st.success(f"{num_selected} borradores generados.")
                 st.balloons(); time.sleep(2); st.rerun()
@@ -502,18 +495,19 @@ def phase_2_page(model):
                         ejecutar_regeneracion(subapartado_titulo, file_info['id'])
                     if st.button("🗑️ Borrar", key=f"del_{i}", use_container_width=True):
                         ejecutar_borrado(subapartado_titulo, subapartado_folder_id)
-        else:
+                else:
                     if st.button("Generar Borrador", key=f"gen_{i}", use_container_width=True):
                         with st.spinner(f"Generando borrador para '{subapartado_titulo}'..."):
                             if USE_GPT_MODEL:
                                 if ejecutar_generacion_con_gpt(subapartado_titulo, matiz):
                                     st.rerun()
                             else:
-                                # Añade 'model' como primer argumento
+                                # <<< CORRECCIÓN AQUÍ 2 de 2 >>>
+                                # Añadimos 'model' como primer argumento
                                 if ejecutar_generacion_con_gemini(model, subapartado_titulo, matiz):
                                     st.rerun()
                                     
-    # --- NAVEGACIÓN (Restaurada a tu lógica original) ---
+    # --- NAVEGACIÓN ---
     st.markdown("---")
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
@@ -969,6 +963,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
