@@ -180,52 +180,37 @@ Te proporcionaré DOS elementos clave:
 """
 
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
-**SYSTEM DIRECTIVE: TU RESPUESTA DEBE SER EN ESPAÑOL. NO ERES UN REDACTOR, ERES UN PLANIFICADOR. NO ESCRIBAS CONTENIDO FINAL, CREA UN ESQUEMA DE TRABAJO.**
+**[ROL Y OBJETIVO ABSOLUTAMENTE CRÍTICO]**
+Tu ÚNICA función es actuar como un **ANALISTA DE REQUISITOS**. NO eres un escritor, NO eres un consultor, NO eres un redactor. Eres un analista que extrae información y la organiza en una tabla.
 
-**TASK:**
-Crear un **esquema de guion conciso y estructurado** para un subapartado de una memoria técnica. Tu salida debe ser una guía para un redactor, no el texto final.
+**[TAREA ÚNICA Y EXCLUSIVA]**
+Analiza el contexto proporcionado (análisis de pliegos, indicaciones, etc.) para el subapartado y completa la siguiente **TABLA DE PLANIFICACIÓN EN MARKDOWN**.
+Tu respuesta debe ser **ÚNICA Y EXCLUSIVAMENTE LA TABLA**. No incluyas ningún texto antes o después de la tabla. No escribas introducciones ni conclusiones. SOLO LA TABLA.
 
-**CONTEXT PROVIDED TO YOU:**
-1.  **Análisis de Pliegos:** Resumen de lo que se debe incluir.
-2.  **Indicaciones Específicas:** Directrices detalladas para este subapartado.
-3.  **Documentación de Apoyo:** Información adicional si está disponible.
+**[FORMATO DE SALIDA ESTRICTO E INNEGOCIABLE: TABLA MARKDOWN]**
+Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 
-**MANDATORY RULES:**
-1.  **ROLE:** Eres un **Planificador de Contenidos Estratégico**. Tu único trabajo es desglosar el contenido en puntos clave, preguntas y requisitos. **Está prohibido redactar párrafos narrativos.**
-2.  **FORMAT:** Usa Markdown exclusivamente con estos elementos:
-    -   Títulos (`###`).
-    -   Listas con viñetas (`*` o `-`) para ideas, datos y requisitos.
-    -   Listas numeradas para preguntas clave que el redactor debe responder.
-3.  **TONE:** Telegráfico, directo y funcional.
-4.  **NO META-COMMENTARY:** No evalúes el material. Simplemente extráelo y organízalo en el esquema.
+| Criterio de Planificación      | Extracción y Desglose de Contenido                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Requisitos del Pliego**   | (Aquí, lista **telegráficamente** con viñetas `-` los requisitos numéricos, legales u obligatorios extraídos DIRECTAMENTE del pliego. Sé breve. Ej: `- Mínimo 100m²`)  |
+| **2. Propuesta de Solución**   | (Aquí, lista con viñetas `-` las soluciones, tecnologías o métodos propuestos para cumplir los requisitos. Ej: `- Usar sistema de reservas Skedda`)                   |
+| **3. Preguntas para el Experto** | (Aquí, formula de 1 a 3 preguntas **cruciales** que un experto humano debería responder para añadir valor. Ej: `- ¿Cuál es nuestro diferenciador clave en formación?`)  |
+| **4. Palabras Clave**         | (Aquí, enumera de 5 a 10 palabras o conceptos clave que deben aparecer en la redacción final. Ej: `sostenibilidad, innovación, coworking, seguridad, eficiencia`)     |
 
-**EXAMPLE OF CORRECT OUTPUT (El formato que DEBES seguir):**
-"### Guion para: 1.1.1. Diseño y Adecuación del Espacio Físico
+**[EJEMPLO DE UNA RESPUESTA PERFECTA Y CONCISA]**
 
-**Requisitos Clave del Pliego:**
-*   Superficie mínima: 100m² (Ref: Pliego, Anexo II, pág. 5).
-*   Formato de entrega: Plano detallado en CAD.
-*   Diferenciación de áreas funcionales obligatoria.
+| Criterio de Planificación      | Extracción y Desglose de Contenido                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Requisitos del Pliego**   | - Mínimo 100m² distribuidos.<br>- Rotulación según manual de identidad de la Xunta.<br>- Horario mínimo de 9h-18h L-J y 8h-15h V.                                     |
+| **2. Propuesta de Solución**   | - Oficina de 120m² con diseño abierto.<br>- Rótulo exterior luminoso con LED de bajo consumo.<br>- Propuesta de horario estival de 8h-15h L-V.                         |
+| **3. Preguntas para el Experto** | - ¿Qué software específico de CRM, además de Calendly, podemos integrar para demostrar innovación?<br>- ¿Tenemos algún caso de éxito medible en gestión de espacios similar? |
+| **4. Palabras Clave**         | `optimización de espacios, imagen corporativa, eficiencia energética, control de acceso, gestión de incidencias, propuesta de valor, networking, emprendimiento`     |
 
-**Preguntas a Resolver por el Redactor:**
-1.  ¿Cómo se garantiza la accesibilidad universal según la normativa vigente?
-2.  ¿Qué sistema de climatización y ventilación se instalará?
-3.  ¿Se incluirá un render 3D del espacio además del plano CAD?
 
-**Puntos a Desarrollar:**
-*   Describir el área de "Oficina de información" (25m², 2 puestos, zona espera).
-*   Detallar la "Sala de formación" (30m², mobiliario modular, proyector interactivo).
-*   Mencionar brevemente el cumplimiento de normativas de seguridad y evacuación.
-"
-
-**EXAMPLE OF INCORRECT OUTPUT (Lo que DEBES EVITAR):**
-"### 1.1.1. Diseño y Adecuación del Espacio Físico
-
-Para garantizar el cumplimiento de los requisitos espaciales, se presentará un plano detallado en formato CAD que asegura una superficie mínima de 100m². Este espacio se diferenciará en..."
-(Esto es incorrecto porque es un párrafo redactado).
-
-**AHORA, BASÁNDOTE EN EL CONTEXTO PROPORCIONADO, CREA EL ESQUEMA DE GUION PARA EL SUBAPARTADO.**
+**[ACCIÓN]**
+Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
 """
+
 PROMPT_REGENERACION = """
 Actúas como un editor experto que refina una estructura JSON para una memoria técnica.
 Te proporcionaré TRES elementos clave:
@@ -312,6 +297,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
