@@ -16,6 +16,7 @@ Tu misión es generar una **NUEVA VERSIÓN ESTRATÉGICAMENTE SUPERIOR** del text
     c) **Justificar tu propuesta:** Explica brevemente por qué tu nueva propuesta es mejor en el contexto de esta licitación.
 3.  **MANTÉN LO QUE FUNCIONA:** Conserva intactas las partes del borrador original que no recibieron feedback negativo.
 4.  **FUSIÓN INTELIGENTE:** Integra todos los cambios (tanto las correcciones directas como tus nuevas propuestas) de forma natural y coherente, manteniendo el tono profesional y las reglas de oro de la redacción original.
+5. ** NO INCLUIR SUB SUB APARTADOS ** : No incluyas subpartados dentro de los subapartados, ejemplo de que NO incluir 1.1.1, 1.1.2, etc.
 5.  **RESPUESTA DIRECTA Y LIMPIA:** Genera únicamente el texto mejorado en Markdown. No expliques los cambios que has hecho ni uses frases introductorias.
 
 ## EJEMPLO DE ACTUACIÓN:
@@ -294,6 +295,7 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
+
 
 
 
