@@ -15,6 +15,17 @@ def limpiar_respuesta_json(texto_sucio):
     if match_objeto: return match_objeto.group(0).strip()
     return ""
 
+    import re
+
+def natural_sort_key(s):
+    """
+    Crea una clave para el ordenamiento 'natural' de cadenas.
+    Ej: 'item 10' viene después de 'item 2'.
+    """
+    if not isinstance(s, str):
+        return [s]
+    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+    
 def agregar_markdown_a_word(documento, texto_markdown):
     patron_encabezado = re.compile(r'^(#+)\s+(.*)')
     patron_lista_numerada = re.compile(r'^\s*\d+\.\s+')
@@ -316,5 +327,6 @@ def limpiar_respuesta_final(texto_ia):
     ]
     for patron in frases_a_eliminar:
         texto_limpio = re.sub(patron, '', texto_limpio, flags=re.IGNORECASE | re.MULTILINE)
+
 
     return texto_limpio.strip()
