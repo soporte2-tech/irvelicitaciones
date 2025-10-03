@@ -22,6 +22,13 @@ from utils import (
     corregir_numeracion_markdown, generar_indice_word
 )
 
+
+from utils import (
+    mostrar_indice_desplegable, limpiar_respuesta_json, agregar_markdown_a_word,
+    wrap_html_fragment, html_a_imagen, limpiar_respuesta_final,
+    corregir_numeracion_markdown, generar_indice_word,
+    natural_sort_key  # <--- ¡AÑADE ESTO!
+)
 # =============================================================================
 #           PÁGINA DE BIENVENIDA / INICIO DE SESIÓN
 # =============================================================================
@@ -963,6 +970,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
