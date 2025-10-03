@@ -22,8 +22,6 @@ from utils import (
     corregir_numeracion_markdown, generar_indice_word
 )
 
-
-
 # =============================================================================
 #           PÁGINA DE BIENVENIDA / INICIO DE SESIÓN
 # =============================================================================
@@ -267,15 +265,25 @@ def phase_1_results_page(model):
                     st.error(f"Ocurrió un error durante la sincronización o guardado: {e}")
 
 def phase_2_page(model):
-    """Centro de mando para la generación de guiones con opciones individuales y en lote."""
-    from app import go_to_phase1, go_to_phase1_results, go_to_phase3
+    """
+    Centro de mando para la generación de guiones.
+    MODIFICADO: Permite cambiar entre el motor de Gemini y GPT con una variable.
+    """
+    from app import go_to_phase1, go_to_phase1_results, go_to_phase4, go_to_phase3
     from prompts import PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL
+
+    # =================== [ CONTROL PARA PRUEBAS ] ===================
+    # Cambia esta variable para elegir el motor de generación
+    # True  = Usa el nuevo prompt y la API de OpenAI (GPT-4o) para generar esquemas.
+    # False = Usa el prompt original y la API de Google (Gemini) para generar borradores.
+    USE_GPT_MODEL = True
+    # ================================================================
 
     st.markdown("<h3>FASE 2: Centro de Mando de Guiones</h3>", unsafe_allow_html=True)
     st.markdown("Gestiona tus guiones de forma individual o selecciónalos para generarlos en lote.")
     st.markdown("---")
 
-    # --- SETUP INICIAL Y CARGA DE ÍNDICE ---
+    # --- SETUP INICIAL Y CARGA DE ÍNDICE (sin cambios) ---
     service = st.session_state.drive_service
     project_folder_id = st.session_state.selected_project['id']
     if 'generated_structure' not in st.session_state:
@@ -295,7 +303,7 @@ def phase_2_page(model):
             st.error(f"Error al cargar el índice desde Drive: {e}")
             return
 
-    # --- CONSTRUCCIÓN DE LISTA ROBUSTA ---
+    # --- CONSTRUCCIÓN DE LISTA ROBUSTA (sin cambios) ---
     estructura = st.session_state.generated_structure.get('estructura_memoria', [])
     matices_originales = st.session_state.generated_structure.get('matices_desarrollo', [])
     matices_dict = {item.get('subapartado', ''): item for item in matices_originales if isinstance(item, dict) and 'subapartado' in item}
@@ -309,8 +317,9 @@ def phase_2_page(model):
             else: subapartados_a_mostrar.append({"apartado": apartado_principal, "subapartado": subapartado_titulo, "indicaciones": "No se encontraron indicaciones detalladas."})
     if not subapartados_a_mostrar: st.warning("El índice no contiene subapartados."); return
 
-    # --- FUNCIONES DE ACCIÓN INTERNAS ---
-    def ejecutar_generacion(titulo, indicaciones_completas, show_toast=True):
+    # --- FUNCIONES DE ACCIÓN INTERNAS (AMBAS DISPONIBLES) ---
+
+    def ejecutar_generacion_con_gemini(titulo, indicaciones_completas, show_toast=True):
         nombre_limpio = re.sub(r'[\\/*?:"<>|]', "", titulo)
         nombre_archivo = nombre_limpio + ".docx"
         try:
@@ -338,19 +347,74 @@ def phase_2_page(model):
             word_file_obj.name = nombre_archivo
             word_file_obj.type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             upload_file_to_drive(service, word_file_obj, subapartado_guion_folder_id)
-            if show_toast: st.toast(f"Borrador para '{titulo}' generado y guardado.")
+            if show_toast: st.toast(f"Borrador (Gemini) para '{titulo}' generado y guardado.")
             return True
-        except Exception as e: st.error(f"Error al generar '{titulo}': {e}"); return False
+        except Exception as e: st.error(f"Error al generar con Gemini para '{titulo}': {e}"); return False
+
+    def ejecutar_generacion_con_gpt(titulo, indicaciones_completas, show_toast=True):
+        from openai import OpenAI
+        from prompts import PROMPT_GPT_TABLA_PLANIFICACION
+        try:
+            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+        except Exception:
+            st.error("Error: 'OPENAI_API_KEY' no encontrada en secrets.toml.")
+            return False
+
+        nombre_limpio = re.sub(r'[\\/*?:"<>|]', "", titulo)
+        nombre_archivo = nombre_limpio + ".docx"
+        try:
+            contexto_para_gpt = "--- INDICACIONES CLAVE PARA EL SUBAPARTADO ---\n"
+            contexto_para_gpt += json.dumps(indicaciones_completas, indent=2, ensure_ascii=False)
+            contexto_para_gpt += "\n\n"
+            
+            pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
+            pliegos_en_drive = get_files_in_project(service, pliegos_folder_id)
+            contexto_para_gpt += "--- CONTENIDO COMPLETO DE LOS DOCUMENTOS DE REFERENCIA (PLIEGOS) ---\n"
+            for file_info in pliegos_en_drive:
+                file_content_bytes = download_file_from_drive(service, file_info['id'])
+                texto_extraido = ""
+                try:
+                    if file_info['name'].endswith('.pdf'):
+                        reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
+                        texto_extraido = "\n".join(page.extract_text() for page in reader.pages)
+                    elif file_info['name'].endswith('.docx'):
+                        doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
+                        texto_extraido = "\n".join(para.text for para in doc.paragraphs)
+                except Exception as e:
+                    st.warning(f"No se pudo procesar el archivo '{file_info['name']}': {e}")
+                contexto_para_gpt += f"**Inicio del documento: {file_info['name']}**\n{texto_extraido}\n**Fin del documento: {file_info['name']}**\n\n"
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": PROMPT_GPT_TABLA_PLANIFICACION},
+                    {"role": "user", "content": contexto_para_gpt}
+                ],
+                temperature=0.2,
+            )
+            guion_generado = response.choices[0].message.content
+
+            guiones_folder_id = find_or_create_folder(service, "Guiones de Subapartados", parent_id=project_folder_id)
+            subapartado_guion_folder_id = find_or_create_folder(service, nombre_limpio, parent_id=guiones_folder_id)
+            documento = docx.Document()
+            agregar_markdown_a_word(documento, guion_generado)
+            doc_io = io.BytesIO()
+            documento.save(doc_io)
+            word_file_obj = io.BytesIO(doc_io.getvalue())
+            word_file_obj.name = nombre_archivo
+            word_file_obj.type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            upload_file_to_drive(service, word_file_obj, subapartado_guion_folder_id)
+            if show_toast: st.toast(f"Borrador (GPT) para '{titulo}' generado y guardado.")
+            return True
+        except Exception as e: st.error(f"Error al generar con GPT para '{titulo}': {e}"); return False
 
     def ejecutar_regeneracion(titulo, file_id_borrador):
-        # Esta función necesita ser implementada
         st.warning(f"La función de re-generación para '{titulo}' aún no está implementada.")
 
     def ejecutar_borrado(titulo, folder_id_to_delete):
-        # Esta función necesita ser implementada
         st.warning(f"La función de borrado para '{titulo}' aún no está implementada.")
 
-
+    # --- UI Y LÓGICA DE LA PÁGINA ---
     with st.spinner("Sincronizando con Google Drive..."):
         guiones_folder_id = find_or_create_folder(service, "Guiones de Subapartados", parent_id=project_folder_id)
         carpetas_existentes_response = get_files_in_project(service, guiones_folder_id)
@@ -358,7 +422,6 @@ def phase_2_page(model):
         nombres_carpetas_existentes = set(carpetas_de_guiones_existentes.keys())
 
     st.subheader("Generación de Borradores en Lote")
-    
     pending_keys = [matiz.get('subapartado') for matiz in subapartados_a_mostrar if re.sub(r'[\\/*?:"<>|]', "", matiz.get('subapartado')) not in nombres_carpetas_existentes]
     
     def toggle_all_checkboxes():
@@ -379,15 +442,16 @@ def phase_2_page(model):
                     titulo = matiz_a_generar.get('subapartado')
                     progress_text = f"Generando ({i+1}/{num_selected}): {titulo}"
                     progress_bar.progress((i + 1) / num_selected, text=progress_text)
-                    ejecutar_generacion(titulo, matiz_a_generar, show_toast=False)
+                    if USE_GPT_MODEL:
+                        ejecutar_generacion_con_gpt(titulo, matiz_a_generar, show_toast=False)
+                    else:
+                        ejecutar_generacion_con_gemini(titulo, matiz_a_generar, show_toast=False)
                 progress_bar.progress(1.0, text="¡Generación en lote completada!")
                 st.success(f"{num_selected} borradores generados.")
-                st.balloons()
-                st.rerun()
+                st.balloons(); time.sleep(2); st.rerun()
 
     st.markdown("---")
     st.subheader("Gestión de Guiones de Subapartados")
-
     for i, matiz in enumerate(subapartados_a_mostrar):
         subapartado_titulo = matiz.get('subapartado')
         if not subapartado_titulo: continue
@@ -401,7 +465,7 @@ def phase_2_page(model):
         else:
             estado = "⚪ No Generado"
             file_info, subapartado_folder_id = None, None
-
+            
         with st.container(border=True):
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -417,12 +481,16 @@ def phase_2_page(model):
                     if st.button("Re-Generar con Feedback", key=f"regen_{i}", type="primary", use_container_width=True):
                         ejecutar_regeneracion(subapartado_titulo, file_info['id'])
                     if st.button("🗑️ Borrar", key=f"del_{i}", use_container_width=True):
-                         ejecutar_borrado(subapartado_titulo, subapartado_folder_id)
+                        ejecutar_borrado(subapartado_titulo, subapartado_folder_id)
                 else:
                     if st.button("Generar Borrador", key=f"gen_{i}", use_container_width=True):
                         with st.spinner(f"Generando borrador para '{subapartado_titulo}'..."):
-                            if ejecutar_generacion(subapartado_titulo, matiz): st.rerun()
+                            if USE_GPT_MODEL:
+                                if ejecutar_generacion_con_gpt(subapartado_titulo, matiz): st.rerun()
+                            else:
+                                if ejecutar_generacion_con_gemini(subapartado_titulo, matiz): st.rerun()
 
+    # --- NAVEGACIÓN (Restaurada a tu lógica original) ---
     st.markdown("---")
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1:
@@ -878,6 +946,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
