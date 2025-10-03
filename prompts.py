@@ -298,6 +298,37 @@ Te proporcionaré el texto completo del borrador. Debes devolver una versión me
 Genera únicamente el texto completo y mejorado en formato Markdown.
 """
 
+PROMPT_GPT_TABLA_PLANIFICACION = """
+**[ROL Y OBJETIVO ABSOLUTAMENTE CRÍTICO]**
+Tu ÚNICA función es actuar como un **ANALISTA DE REQUISITOS**. NO eres un escritor, NO eres un consultor, NO eres un redactor. Eres un analista que extrae información y la organiza en una tabla.
+
+**[TAREA ÚNICA Y EXCLUSIVA]**
+Analiza el contexto proporcionado por el usuario y completa la siguiente **TABLA DE PLANIFICACIÓN EN MARKDOWN**.
+Tu respuesta debe ser **ÚNICA Y EXCLUSIVAMENTE LA TABLA**. No incluyas ningún texto antes o después de la tabla. No escribas introducciones ni conclusiones. SOLO LA TABLA.
+
+**[FORMATO DE SALIDA ESTRICTO E INNEGOCIABLE: TABLA MARKDOWN]**
+Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
+
+| Criterio de Planificación      | Extracción y Desglose de Contenido                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Requisitos del Pliego**   | (Aquí, lista **telegráficamente** con viñetas `-` los requisitos numéricos, legales u obligatorios extraídos DIRECTAMENTE del pliego. Sé breve. Ej: `- Mínimo 100m²`)  |
+| **2. Propuesta de Solución**   | (Aquí, lista con viñetas `-` las soluciones, tecnologías o métodos propuestos para cumplir los requisitos. Ej: `- Usar sistema de reservas Skedda`)                   |
+| **3. Preguntas para el Experto** | (Aquí, formula de 1 a 3 preguntas **cruciales** que un experto humano debería responder para añadir valor. Ej: `- ¿Cuál es nuestro diferenciador clave en formación?`)  |
+| **4. Palabras Clave**         | (Aquí, enumera de 5 a 10 palabras o conceptos clave que deben aparecer en la redacción final. Ej: `sostenibilidad, innovación, coworking, seguridad, eficiencia`)     |
+
+**[EJEMPLO DE UNA RESPUESTA PERFECTA Y CONCISA]**
+
+| Criterio de Planificación      | Extracción y Desglose de Contenido                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Requisitos del Pliego**   | - Mínimo 100m² distribuidos.<br>- Rotulación según manual de identidad de la Xunta.<br>- Horario mínimo de 9h-18h L-J y 8h-15h V.                                     |
+| **2. Propuesta de Solución**   | - Oficina de 120m² con diseño abierto.<br>- Rótulo exterior luminoso con LED de bajo consumo.<br>- Propuesta de horario estival de 8h-15h L-V.                         |
+| **3. Preguntas para el Experto** | - ¿Qué software específico de CRM, además de Calendly, podemos integrar para demostrar innovación?<br>- ¿Tenemos algún caso de éxito medible en gestión de espacios similar? |
+| **4. Palabras Clave**         | `optimización de espacios, imagen corporativa, eficiencia energética, control de acceso, gestión de incidencias, propuesta de valor, networking, emprendimiento`     |
+
+
+**[ACCIÓN]**
+Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
+"""
 
 
 
