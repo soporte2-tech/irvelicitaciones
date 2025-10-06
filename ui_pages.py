@@ -257,8 +257,9 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
 #           FASE 1: ANÁLISIS Y ESTRUCTURA
 # =============================================================================
 
-# AHORA ACEPTA LAS FUNCIONES QUE NECESITA
-def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup):
+# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión completa y mejorada:
+
+def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
         go_to_project_selection(); st.rerun()
@@ -267,17 +268,23 @@ def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results,
     project_folder_id = st.session_state.selected_project['id']
     service = st.session_state.drive_service
 
-    st.markdown(f"<h3>FASE 2: Análisis y Estructura</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
-    st.selectbox(
-        "Selecciona el idioma para la redacción de la memoria:",
-        ('Español', 'Inglés', 'Catalán', 'Gallego', 'Francés', 'Euskera'), # Puedes añadir o quitar idiomas
-        key='project_language' # Guardamos la elección en el estado de la sesión
-    )
+    def limpiar_respuesta_json(texto_sucio):
+        if not isinstance(texto_sucio, str): return ""
+        try:
+            start_index = texto_sucio.find('{')
+            end_index = texto_sucio.rfind('}')
+            if start_index != -1 and end_index != -1 and end_index > start_index:
+                return texto_sucio[start_index:end_index + 1]
+            return ""
+        except Exception: return ""
+
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
     
+    # ... (El código para mostrar y subir archivos permanece igual) ...
     if document_files:
         st.success("Hemos encontrado estos archivos en la carpeta 'Pliegos' de tu proyecto:")
         with st.container(border=True):
@@ -294,7 +301,7 @@ def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results,
     with st.expander("Añadir o reemplazar documentación en la carpeta 'Pliegos'", expanded=not document_files):
         with st.container(border=True):
             st.subheader("Subir nuevos documentos")
-            new_files_uploader = st.file_uploader("Arrastra aquí los nuevos Pliegos o Plantilla", type=['docx', 'pdf'], accept_multiple_files=True, key="new_files_uploader")
+            new_files_uploader = st.file_uploader("Arrastra aquí los Pliegos para analizar", type=['docx', 'pdf'], accept_multiple_files=True, key="new_files_uploader")
             if st.button("Guardar nuevos archivos en Drive"):
                 if new_files_uploader:
                     with st.spinner("Subiendo archivos a la carpeta 'Pliegos'..."):
@@ -304,31 +311,94 @@ def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results,
                 else:
                     st.warning("Por favor, selecciona al menos un archivo para subir.")
 
-    st.markdown("---"); st.header("Análisis y Generación de Índice")
+    st.markdown("---")
+    st.header("Extracción de Requisitos Clave")
     
-    docs_app_folder_id = find_or_create_folder(service, "Documentos aplicación", parent_id=project_folder_id)
-    saved_index_id = find_file_by_name(service, "ultimo_indice.json", docs_app_folder_id)
+    if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
+        with st.spinner("🧠 Leyendo pliegos y extrayendo requisitos..."):
+            try:
+                texto_pliegos_combinado = ""
+                for file in document_files:
+                    st.info(f"Procesando archivo: {file['name']}...")
+                    file_content_bytes = download_file_from_drive(service, file['id'])
+                    texto_extraido = ""
+                    try:
+                        if file['name'].lower().endswith('.pdf'):
+                            reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_extraido = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+                        elif file['name'].lower().endswith('.docx'):
+                            doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_extraido = "\n".join(para.text for para in doc.paragraphs)
+                        texto_pliegos_combinado += f"\n\n--- DOCUMENTO: {file['name']} ---\n{texto_extraido}\n--- FIN DOCUMENTO ---\n"
+                    except Exception as ex_file:
+                        st.warning(f"No se pudo procesar '{file['name']}'. Error: {ex_file}")
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Cargar último índice generado", use_container_width=True, disabled=not saved_index_id):
-            with st.spinner("Cargando índice desde Drive..."):
-                index_content_bytes = download_file_from_drive(service, saved_index_id)
-                index_data = json.loads(index_content_bytes.getvalue().decode('utf-8'))
-                st.session_state.generated_structure = index_data
-                st.session_state.uploaded_pliegos = document_files
-                go_to_phase1_results(); st.rerun()
+                if not texto_pliegos_combinado.strip():
+                    st.error("No se pudo extraer texto de los documentos."); st.stop()
+                
+                idioma_seleccionado = st.session_state.get('project_language', 'Español')
+                prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
+                contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
+                response = model.generate_content(contenido_ia)
+                
+                # --- INICIO DE LA SECCIÓN DE DEPURACIÓN ---
+                # Mostramos la respuesta de la IA ANTES de intentar procesarla
+                with st.expander("🔍 Ver respuesta BRUTA de la IA (para depuración)"):
+                    st.write("Objeto de respuesta completo:")
+                    st.write(response)
+                    try:
+                        st.write("Texto extraído de la respuesta (`response.text`):")
+                        st.code(response.text, language='text')
+                    except Exception as e_text:
+                        st.error(f"No se pudo acceder a `response.text`. Error: {e_text}")
+                # --- FIN DE LA SECCIÓN DE DEPURACIÓN ---
 
-    with col2:
-        if st.button("Analizar Archivos y Generar Nuevo Índice", type="primary", use_container_width=True, disabled=not document_files):
-            # Usamos la función que hemos recibido como argumento
-            if handle_full_regeneration(model):
-                go_to_phase1_results(); st.rerun()
+                if not response.candidates:
+                    st.error("La IA no generó una respuesta. Puede deberse a filtros de seguridad."); st.stop()
 
-    st.write(""); st.markdown("---")
-    # Usamos la función que hemos recibido como argumento
-    st.button("← Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True, key="back_to_projects")
+                respuesta_texto = response.text
+                json_limpio_str = limpiar_respuesta_json(respuesta_texto)
+            
+                if json_limpio_str:
+                    st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
+                    st.toast("✅ ¡Requisitos extraídos con éxito!")
+                    st.rerun()
+                else:
+                    st.error("La IA respondió, pero no se pudo extraer un JSON válido tras la limpieza.")
+            
+            except Exception as e:
+                st.error(f"Ocurrió un error crítico durante el proceso: {e}")
+                st.error(f"Tipo de error: {type(e).__name__}")
 
+    # El código para mostrar los resultados ya es seguro gracias a la corrección anterior, lo mantenemos igual
+    if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
+        requisitos = st.session_state.requisitos_extraidos
+        st.success("Análisis de viabilidad completado:")
+        with st.container(border=True):
+            st.subheader("📊 Resumen de la Licitación")
+            resumen = requisitos.get('resumen_licitacion', {})
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Presupuesto Base", resumen.get('presupuesto_base', 'N/D'))
+            col2.metric("Duración Contrato", resumen.get('duracion_contrato', 'N/D'))
+            col3.metric("Admite Lotes", resumen.get('admite_lotes', 'N/D'))
+            st.markdown("---")
+            st.subheader("📋 Requisitos de Solvencia y Certificados")
+            solvencia = requisitos.get('requisitos_solvencia_certificados', [])
+            if isinstance(solvencia, list) and solvencia:
+                for item in solvencia: st.markdown(f"- {item}")
+            else: st.markdown("_No se encontraron requisitos específicos de solvencia._")
+            st.markdown("---")
+            st.subheader("⚠️ Condiciones Específicas del Contrato")
+            condiciones = requisitos.get('condiciones_especificas', [])
+            if isinstance(condiciones, list) and condiciones:
+                for item in condiciones: st.markdown(f"- {item}")
+            else: st.markdown("_No se encontraron condiciones específicas relevantes._")
+        st.markdown("---")
+        st.button("Continuar a Generación de Índice (Fase 2) →", on_click=go_to_phase2, use_container_width=True, type="primary")
+
+    st.write("")
+    st.markdown("---")
+    st.button("← Volver a Selección de Proyecto", on_click=go_to_project_selection, use_container_width=True)
 # =============================================================================
 #           FASE 1: REVISIÓN DE RESULTADOS
 # =============================================================================
@@ -993,6 +1063,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
