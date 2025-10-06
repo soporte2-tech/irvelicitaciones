@@ -100,11 +100,7 @@ def project_selection_page(go_to_landing, go_to_phase1):
 
 # En ui_pages.py, añade esta nueva función
 
-# ui_pages.py (Pega esta función completa reemplazando la existente)
-
-# ui_pages.py (Pega esta función completa reemplazando la existente)
-
-# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta:
+# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión completa:
 
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
@@ -183,31 +179,23 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                 st.error("No se pudo extraer texto de ninguno de los documentos. Por favor, asegúrate de que no son PDFs escaneados (imágenes).")
                 st.stop()
             
-            # Usamos un bloque try/except más robusto para la llamada a la IA
             try:
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
                 contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
-                
                 response = model.generate_content(contenido_ia)
                 
-                # --- INICIO DE LA CORRECCIÓN ---
-                # 1. Verificar si la respuesta de la IA tiene candidatos válidos
                 if not response.candidates:
                     st.error("La IA no generó una respuesta. Esto puede deberse a los filtros de seguridad.")
-                    # 2. Mostrar información detallada sobre por qué fue bloqueada
                     try:
                         feedback = response.prompt_feedback
                         st.warning(f"Razón del bloqueo: {feedback.block_reason}")
                         st.json([rating.__dict__ for rating in feedback.safety_ratings])
                     except Exception:
                         st.warning("No se pudo obtener información detallada del bloqueo.")
-                    st.stop() # Detenemos la ejecución para evitar más errores
+                    st.stop()
 
-                # 3. Si la validación pasa, accedemos al texto de forma segura
                 respuesta_texto = response.text
-                # --- FIN DE LA CORRECCIÓN ---
-
                 json_limpio_str = limpiar_respuesta_json(respuesta_texto)
             
                 if json_limpio_str:
@@ -218,46 +206,53 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                     st.error("La IA respondió, pero no se pudo extraer un JSON válido de su respuesta.")
                     st.warning("Respuesta BRUTA recibida de la IA:")
                     st.code(respuesta_texto, language='text')
-            
-            except json.JSONDecodeError as e:
-                 st.error(f"Error al procesar el JSON de la IA: {e}")
-                 st.warning("La IA devolvió un formato que no es JSON válido. Respuesta recibida:")
-                 st.code(respuesta_texto, language='text')
             except Exception as e:
                 st.error(f"Ocurrió un error crítico durante el proceso: {e}")
                 st.error(f"Tipo de error: {type(e).__name__}")
 
-
-    # (El resto de la función para mostrar los resultados no cambia y permanece igual)
+    # --- INICIO DE LA CORRECCIÓN CLAVE ---
+    # Mostrar los requisitos de forma segura si ya han sido extraídos
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
         requisitos = st.session_state.requisitos_extraidos
+        
+        # (Opcional) Descomenta la siguiente línea para ver en la app el JSON exacto que devuelve la IA. Muy útil para depurar.
+        # st.json(requisitos)
+
         st.success("Análisis de viabilidad completado:")
         with st.container(border=True):
             st.subheader("📊 Resumen de la Licitación")
+            # Usamos .get() para acceder de forma segura. Si 'resumen_licitacion' no existe, devuelve un diccionario vacío {}
             resumen = requisitos.get('resumen_licitacion', {})
             col1, col2, col3 = st.columns(3)
+            # Accedemos a las claves del resumen también con .get() para máxima seguridad
             col1.metric("Presupuesto Base", resumen.get('presupuesto_base', 'N/D'))
             col2.metric("Duración Contrato", resumen.get('duracion_contrato', 'N/D'))
             col3.metric("Admite Lotes", resumen.get('admite_lotes', 'N/D'))
             st.markdown("---")
+            
             st.subheader("📋 Requisitos de Solvencia y Certificados")
+            # Si 'requisitos_solvencia_certificados' no existe, devuelve una lista vacía []
             solvencia = requisitos.get('requisitos_solvencia_certificados', [])
-            if solvencia:
+            if isinstance(solvencia, list) and solvencia:
                 for item in solvencia: st.markdown(f"- {item}")
-            else: st.markdown("_No se encontraron requisitos específicos de solvencia._")
+            else:
+                st.markdown("_No se encontraron requisitos específicos de solvencia._")
             st.markdown("---")
+            
             st.subheader("⚠️ Condiciones Específicas del Contrato")
+            # Si 'condiciones_especificas' no existe, devuelve una lista vacía []
             condiciones = requisitos.get('condiciones_especificas', [])
-            if condiciones:
+            if isinstance(condiciones, list) and condiciones:
                 for item in condiciones: st.markdown(f"- {item}")
-            else: st.markdown("_No se encontraron condiciones específicas relevantes._")
+            else:
+                st.markdown("_No se encontraron condiciones específicas relevantes._")
+
         st.markdown("---")
         st.button("Continuar a Generación de Índice (Fase 2) →", on_click=go_to_phase2, use_container_width=True, type="primary")
 
     st.write("")
     st.markdown("---")
     st.button("← Volver a Selección de Proyecto", on_click=go_to_project_selection, use_container_width=True)
-    
 # =============================================================================
 #           FASE 1: ANÁLISIS Y ESTRUCTURA
 # =============================================================================
@@ -998,6 +993,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
