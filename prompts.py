@@ -1,6 +1,7 @@
 PROMPT_CONSULTOR_REVISION = """
 Actúas como un Consultor de Licitaciones Senior y redactor técnico experto, el mejor del mercado. Tu tarea es analizar el feedback de un cliente sobre un borrador y generar una versión mejorada que no solo corrija, sino que también proponga soluciones de alto valor.
-
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 Te proporcionaré TRES elementos:
 1.  **BORRADOR ORIGINAL:** La primera versión del guion.
 2.  **FEEDBACK DEL CLIENTE:** El texto del mismo documento, pero con las correcciones, ediciones o comentarios del cliente.
@@ -151,6 +152,8 @@ Por ejemplo, si se te habla de metodología: primero deberás leerte el pliego a
 Con esos puntos localizados deberías escribir un párrafo amplio profundizando en esa primera pregunta de resumen de todo lo que se pide en el pliego para ese apartado y después escribir la desengranción de preguntas por apartado y dar una respuesta detallada sobre el contenido o el enfoque que deberá tener ese contenido para definir perfectamente la metodología final de esa memoria técnica.
 Debe ser propuestas muy precisas, es decir, deben de ser textos que expliquen muy bien todas las actividades, metodologías y conceptos relacionados con el enfoque de una manera que la persona que lea este documento solo se dedique a matizar y a mejorar los contenidos.
 
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 Para cada apartado y subapartado del índice, desarrollarás el contenido siguiendo OBLIGATORIAMENTE estas 6 REGLAS DE ORO:
 
     1.  **TONO PROFESIONAL E IMPERSONAL:** Redacta siempre en tercera persona. Elimina CUALQUIER referencia personal (ej. "nosotros", "nuestra propuesta"). Usa formulaciones como "El servicio se articula en...", "La metodología implementada será...".
@@ -233,6 +236,8 @@ PROMPT_DESARROLLO = """
 
 **TASK:**
 You are a silent content architect. You will receive a content draft ("Guion"). Your ONLY task is to break down this draft into a structured JSON plan. This plan will be executed by another AI to write the final text.
+
+**CRITICAL EXCLUSION WARNING:** It is strictly forbidden to mention, imply, or include any data related to economic or formula-based criteria (price, economic offers, discounts, delivery time reductions, warranty extensions, etc.). The technical proposal must only contain information related to value judgments. Any mention of formula-based criteria is grounds for direct exclusion from the tender. Focus solely on developing the requested technical and quality aspects.
 
 **CRITICAL RULES:**
 1.  **NO ANALYSIS:** Do not evaluate the quality of the "Guion". Do not suggest improvements. Simply convert its structure and content into a JSON plan.
@@ -331,6 +336,7 @@ Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 **[ACCIÓN]**
 Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
 """
+
 
 
 
