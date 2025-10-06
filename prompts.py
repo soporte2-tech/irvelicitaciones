@@ -267,15 +267,23 @@ Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato rel
 Genera únicamente el objeto JSON corregido. No incluyas ningún texto fuera de él.
 """
 
+# Reemplaza tu PROMPT_DESARROLLO actual con este en tu archivo prompts.py
+
 PROMPT_DESARROLLO = """
-**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. ALL TEXT WITHIN THE JSON MUST BE IN THIS LANGUAGE : **idioma: {idioma}**. YOU ARE A CONTENT ARCHITECT, NOT A CONSULTANT. YOUR JOB IS TO DECONSTRUCT, NOT TO ANALYZE OR EVALUATE.**
+**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. ALL TEXT WITHIN THE JSON MUST BE IN THIS LANGUAGE: {idioma}. YOU ARE A CONTENT ARCHITECT, NOT A CONSULTANT. YOUR JOB IS TO DECONSTRUCT, NOT TO ANALYZE OR EVALUATE.**
+
+**STRATEGIC CONTEXT & CONSTRAINTS (ABSOLUTE RULES):**
+- **Overall Document Limit:** {max_paginas} pages.
+- **General Formatting Rules:** {reglas_formato}.
+- **Suggested Length for this ENTIRE main section ('{apartado_referencia}'):** {paginas_sugeridas_apartado} pages.
+- **Your Mission:** Deconstruct the 'Guion' for the subsection '{subapartado_referencia}' into a series of executable prompts. The prompts you create must be sized and detailed appropriately so that the final written content fits logically within the overall page budget for this section. Break down long topics into multiple, smaller text prompts if necessary to control the output length.
 
 **TASK:**
 You are a silent content architect. You will receive a content draft ("Guion"). Your ONLY task is to break down this draft into a structured JSON plan. This plan will be executed by another AI to write the final text.
 
 **CRITICAL RULES:**
 1.  **CRITICAL EXCLUSION WARNING:** It is strictly forbidden to mention, imply, or include any data related to economic or formula-based criteria (price, economic offers, discounts, delivery time reductions, warranty extensions, etc.). The technical proposal must only contain information related to value judgments. Any mention of formula-based criteria is grounds for direct exclusion from the tender. Focus solely on developing the requested technical and quality aspects.
-2.  **NO ANALYSIS:** Do not evaluate the quality of the "Guion". Do not suggest improvements. Simply convert its structure and content into a JSON plan.
+2.  **NO ANALYSIS:** Do not evaluate the quality of the "Guion". Do not suggest improvements. Simply convert its structure and content into a JSON plan based on the strategic constraints provided above.
 3.  **DECISION LOGIC (TEXT vs. VISUAL):**
     *   Identify parts of the "Guion" that are descriptive, narrative, or explanatory. These become **"texto"** type prompts.
     *   Identify parts that describe tables, flowcharts, diagrams, or structured feature lists. These become **"visual"** type prompts.
@@ -293,16 +301,10 @@ Your response must be a single, valid JSON object containing a list of prompts.
 {{
   "plan_de_prompts": [
     {{
-      "apartado_referencia": "{apartado_titulo}",
-      "subapartado_referencia": "{subapartado_titulo}",
+      "apartado_referencia": "{apartado_referencia}",
+      "subapartado_referencia": "{subapartado_referencia}",
       "prompt_id": "A unique ID. Use a suffix like '_TEXT' for text and '_HTML_VISUAL' for visuals.",
       "prompt_para_asistente": "[Here you insert the FULL content of TEMPLATE FOR TEXT or TEMPLATE FOR VISUAL, filled with the description from the 'Guion']"
-    }},
-    {{
-      "apartado_referencia": "{apartado_titulo}",
-      "subapartado_referencia": "{subapartado_titulo}",
-      "prompt_id": "Another_unique_ID_HTML_VISUAL",
-      "prompt_para_asistente": "[Here you insert the FULL content of TEMPLATE FOR VISUAL, for example, for a table]"
     }}
   ]
 }}
@@ -407,6 +409,7 @@ Ahora, procede a crear el **guion de planificación** para el subapartado propor
 # =================================================================================
 #           FIN DE LA MODIFICACIÓN: PROMPT_GPT_TABLA_PLANIFICACION ACTUALIZADO
 # =================================================================================
+
 
 
 
