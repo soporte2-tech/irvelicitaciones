@@ -117,24 +117,52 @@ Analiza los documentos adjuntos y genera una respuesta en formato JSON que conte
     -   **Contenido Detallado:** Explica qué información específica del pliego se debe desarrollar aquí.
     -   **Objetivo Estratégico:** Describe qué se debe demostrar al evaluador para conseguir la máxima puntuación (ej: "El objetivo es demostrar un dominio completo del proceso X y cómo nuestra metodología mitiga los riesgos Y").
     -   **Elementos Clave a Incluir:** Lista de puntos, tablas, gráficos o datos que no pueden faltar.
+8.  **EXTRAER PARÁMETROS DE LA LICITACIÓN:** Debes buscar y extraer la siguiente información de los pliegos:
+    -   El **número máximo de páginas** permitido para la memoria técnica.
+    -   Las **reglas de formato** (tipo de fuente, tamaño, interlineado, márgenes).
+    -   Qué elementos están **excluidos del cómputo de páginas** (portada, índice, anexos).
+    -   La **puntuación máxima** asignada a cada criterio o apartado principal.
+    Estos datos deben incluirse en una nueva clave de nivel superior en el JSON llamada `configuracion_licitacion`.
+
+9.  **PONDERAR Y PLANIFICAR EXTENSIÓN:** Basándote en el límite total de páginas y la puntuación de cada apartado principal, debes proponer una distribución de páginas. **A más puntos, más páginas sugeridas**. Esta planificación debe ir en una nueva clave de nivel superior llamada `plan_extension`.
 
 ## ESTRUCTURA DEL JSON DE SALIDA:
 {
   "titulo_memoria": "Título sugerido para la memoria técnica",
+  "configuracion_licitacion": {
+    "max_paginas": 50,
+    "reglas_formato": "Fuente Arial, tamaño 11, interlineado sencillo.",
+    "exclusiones_paginado": "Portada e índice no computan en el límite de páginas.",
+    "puntuacion_total_juicio_valor": 70
+  },
+  "plan_extension": [
+    {
+      "apartado": "1. Metodología de Trabajo",
+      "puntos_asignados": 40,
+      "paginas_sugeridas": 28
+    },
+    {
+      "apartado": "2. Plan de Calidad",
+      "puntos_asignados": 20,
+      "paginas_sugeridas": 14
+    },
+    {
+      "apartado": "3. Mejoras Adicionales",
+      "puntos_asignados": 10,
+      "paginas_sugeridas": 7
+    }
+  ],
   "estructura_memoria": [
     {
-      "apartado": "Título del apartado principal (ej: 1. Metodología de Trabajo)",
-      "subapartados": [
-        "Título del subapartado 1.1",
-        "Título del subapartado 1.2"
-      ]
+      "apartado": "1. Metodología de Trabajo",
+      "subapartados": ["1.1. Fases del Proyecto", "1.2. Equipo Técnico"]
     }
   ],
   "matices_desarrollo": [
     {
-      "apartado": "Título del apartado principal",
-      "subapartado": "Título del subapartado",
-      "indicaciones": "Instrucciones detalladas y específicas extraídas del pliego para desarrollar este punto concreto, siguiendo las reglas de la sección 'CONTENIDO DE matices_desarrollo'."
+      "apartado": "1. Metodología de Trabajo",
+      "subapartado": "1.1. Fases del Proyecto",
+      "indicaciones": "..."
     }
   ]
 }
@@ -230,7 +258,7 @@ Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato rel
 -   **INCORPORA EL FEEDBACK:** Lee atentamente las instrucciones del usuario y aplícalas a la nueva estructura. Por ejemplo, si pide "une los apartados 1.1 y 1.2", debes hacerlo. Si pide "el apartado 2 debe hablar sobre la experiencia del equipo", debes modificar las indicaciones de ese apartado.
 -   **NO PIERDAS INFORMACIÓN:** Si el usuario solo pide cambiar el apartado 3, los apartados 1, 2, 4, etc., deben permanecer intactos en la nueva versión.
 -   **SÉ PRECISO:** No inventes nuevos apartados a menos que el usuario te lo pida explícitamente. Céntrate únicamente en aplicar las correcciones solicitadas.
-
+-   **FEEDBACK COMPLETO:** Ten en cuenta que el feedback del usuario puede referirse a la `estructura_memoria`, los `matices_desarrollo`, la `configuracion_licitacion` o el `plan_extension`. Asegúrate de actualizar el JSON completo con los cambios solicitados.
 Genera únicamente el objeto JSON corregido. No incluyas ningún texto fuera de él.
 """
 
@@ -338,6 +366,7 @@ Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 **[ACCIÓN]**
 Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
 """
+
 
 
 
