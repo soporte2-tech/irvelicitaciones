@@ -104,79 +104,9 @@ def project_selection_page(go_to_landing, go_to_phase1):
 # =============================================================================
 
 # AHORA ACEPTA LAS FUNCIONES QUE NECESITA
-def phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup):
-    if not st.session_state.get('selected_project'):
-        st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
-        go_to_project_selection(); st.rerun()
-
-    project_name = st.session_state.selected_project['name']
-    project_folder_id = st.session_state.selected_project['id']
-    service = st.session_state.drive_service
-
-    st.markdown(f"<h3>FASE 1: Análisis y Estructura</h3>", unsafe_allow_html=True)
-    st.info(f"Estás trabajando en el proyecto: **{project_name}**")
-
-    pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
-    document_files = get_files_in_project(service, pliegos_folder_id)
-    
-    if document_files:
-        st.success("Hemos encontrado estos archivos en la carpeta 'Pliegos' de tu proyecto:")
-        with st.container(border=True):
-            for file in document_files:
-                cols = st.columns([4, 1])
-                cols[0].write(f"📄 **{file['name']}**")
-                if cols[1].button("Eliminar", key=f"del_{file['id']}", type="secondary"):
-                    with st.spinner(f"Eliminando '{file['name']}'..."):
-                        if delete_file_from_drive(service, file['id']):
-                            st.toast(f"Archivo '{file['name']}' eliminado."); st.rerun()
-    else:
-        st.info("La carpeta 'Pliegos' de este proyecto está vacía. Sube los archivos base.")
-
-    with st.expander("Añadir o reemplazar documentación en la carpeta 'Pliegos'", expanded=not document_files):
-        with st.container(border=True):
-            st.subheader("Subir nuevos documentos")
-            new_files_uploader = st.file_uploader("Arrastra aquí los nuevos Pliegos o Plantilla", type=['docx', 'pdf'], accept_multiple_files=True, key="new_files_uploader")
-            if st.button("Guardar nuevos archivos en Drive"):
-                if new_files_uploader:
-                    with st.spinner("Subiendo archivos a la carpeta 'Pliegos'..."):
-                        for file_obj in new_files_uploader:
-                            upload_file_to_drive(service, file_obj, pliegos_folder_id)
-                        st.rerun()
-                else:
-                    st.warning("Por favor, selecciona al menos un archivo para subir.")
-
-    st.markdown("---"); st.header("Análisis y Generación de Índice")
-    
-    docs_app_folder_id = find_or_create_folder(service, "Documentos aplicación", parent_id=project_folder_id)
-    saved_index_id = find_file_by_name(service, "ultimo_indice.json", docs_app_folder_id)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Cargar último índice generado", use_container_width=True, disabled=not saved_index_id):
-            with st.spinner("Cargando índice desde Drive..."):
-                index_content_bytes = download_file_from_drive(service, saved_index_id)
-                index_data = json.loads(index_content_bytes.getvalue().decode('utf-8'))
-                st.session_state.generated_structure = index_data
-                st.session_state.uploaded_pliegos = document_files
-                go_to_phase1_results(); st.rerun()
-
-    with col2:
-        if st.button("Analizar Archivos y Generar Nuevo Índice", type="primary", use_container_width=True, disabled=not document_files):
-            # Usamos la función que hemos recibido como argumento
-            if handle_full_regeneration(model):
-                go_to_phase1_results(); st.rerun()
-
-    st.write(""); st.markdown("---")
-    # Usamos la función que hemos recibido como argumento
-    st.button("← Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True, key="back_to_projects")
-
-
-# ... Y así sucesivamente para el resto de las funciones de página ...
-# (He aplicado el patrón a todas las funciones por ti)
-
 def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration):
     st.markdown("<h3>FASE 1: Revisión de Resultados</h3>", unsafe_allow_html=True)
-    st.markdown("Revisa el índice. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
+    st.markdown("Revisa el índice y el plan estratégico. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
     st.markdown("---")
     st.button("← Volver a la gestión de archivos", on_click=go_to_phase1)
 
@@ -192,7 +122,8 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
 
         with st.spinner("🧠 Incorporando tu feedback y regenerando la estructura..."):
             try:
-                contenido_ia_regeneracion = [PROMPT_REGENERACION]
+                # (Aquí va tu lógica de handle_regeneration_with_feedback que ya tienes, no cambia nada)
+                contenido_ia_regeneracion = [PROMPT_REGENERACION] # Asegúrate que PROMPT_REGENERACION esté actualizado
                 contenido_ia_regeneracion.append("--- INSTRUCCIONES DEL USUARIO ---\n" + feedback_text)
                 contenido_ia_regeneracion.append("--- ESTRUCTURA JSON ANTERIOR A CORREGIR ---\n" + json.dumps(st.session_state.generated_structure, indent=2))
                 
@@ -215,29 +146,71 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
             except Exception as e:
                 st.error(f"Ocurrió un error durante la regeneración: {e}")
 
+    # ===== INICIO DE LA MODIFICACIÓN =====
+    # Este es el contenedor principal que ya tenías.
+    # Vamos a añadir el nuevo bloque DENTRO de él.
     with st.container(border=True):
+        st.subheader("Índice Propuesto")
+        # Esta es la línea que ya tenías para mostrar el índice
         mostrar_indice_desplegable(st.session_state.generated_structure.get('estructura_memoria'))
+
+        # AÑADE ESTE NUEVO BLOQUE JUSTO DEBAJO
+        # ----------------------------------------------------------------------
+        st.markdown("---")
+        st.subheader("📊 Plan Estratégico del Documento")
+
+        config = st.session_state.generated_structure.get('configuracion_licitacion', {})
+        plan = st.session_state.generated_structure.get('plan_extension', [])
+
+        if not config and not plan:
+            st.warning("No se detectaron parámetros estratégicos (páginas, puntos) en los pliegos.")
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric(
+                    label="Páginas Máximas Detectadas",
+                    value=config.get('max_paginas', 'N/D')
+                )
+                st.caption(f"Exclusiones: {config.get('exclusiones_paginado', 'No especificado')}")
+            with col2:
+                st.write("**Reglas de Formato Detectadas:**")
+                st.info(config.get('reglas_formato', 'No especificado'))
+
+            if plan:
+                st.write("**Distribución de Contenido Sugerida (Páginas por Apartado):**")
+                # Muestra la tabla de distribución de páginas
+                st.dataframe(plan, use_container_width=True, hide_index=True)
+        # ----------------------------------------------------------------------
+
         st.markdown("---")
         st.subheader("Validación y Siguiente Paso")
         
-        st.text_area("Si necesitas cambios, indícalos aquí:", key="feedback_area", placeholder="Ej: 'Une los apartados 1.1 y 1.2 en uno solo.'")
+        # Este es el área de texto que ya tenías, pero con un placeholder mejorado.
+        st.text_area(
+            "Si necesitas cambios en el índice o en el plan, indícalos aquí:",
+            key="feedback_area",
+            placeholder="Ej: 'El límite real son 40 páginas, reajusta la distribución.' o 'El apartado 2 vale 30 puntos, no 20.' o 'Añade un subapartado sobre Sostenibilidad en el punto 1.'"
+        )
         
+        # Estas son las columnas con los botones que ya tenías.
         col1, col2 = st.columns(2)
         with col1:
             st.button("Regenerar con Feedback", on_click=handle_regeneration_with_feedback, use_container_width=True)
         with col2:
             st.button("🔁 Regenerar Índice Entero", on_click=lambda: handle_full_regeneration(model), use_container_width=True, help="Descarta este índice y genera uno nuevo desde cero analizando los pliegos otra vez.")
 
-        if st.button("Aceptar Índice y Pasar a Fase 2 →", type="primary", use_container_width=True):
+        # Este es el botón final que ya tenías.
+        if st.button("Aceptar Índice y Plan, y Pasar a Fase 2 →", type="primary", use_container_width=True):
             with st.spinner("Sincronizando carpetas y guardando índice final en Drive..."):
                 try:
+                    # (Tu lógica para sincronizar y guardar el JSON en Drive se queda igual)
                     service = st.session_state.drive_service
                     project_folder_id = st.session_state.selected_project['id']
                     deleted_count = sync_guiones_folders_with_index(service, project_folder_id, st.session_state.generated_structure)
                     if deleted_count > 0:
                         st.success(f"Limpieza completada: {deleted_count} carpetas de guiones obsoletas eliminadas.")
                     docs_app_folder_id = find_or_create_folder(service, "Documentos aplicación", parent_id=project_folder_id)
-                    json_bytes = json.dumps(st.session_state.generated_structure, indent=2).encode('utf-8')
+                    json_bytes = json.dumps(st.session_state.generated_structure, indent=2, ensure_ascii=False).encode('utf-8')
                     mock_file_obj = io.BytesIO(json_bytes)
                     mock_file_obj.name = "ultimo_indice.json"
                     mock_file_obj.type = "application/json"
@@ -250,8 +223,6 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
                     st.rerun()
                 except Exception as e:
                     st.error(f"Ocurrió un error durante la sincronización o guardado: {e}")
-
-# ... (El resto de las funciones de fase siguen el mismo patrón)
 
 def phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3):
     USE_GPT_MODEL = True
@@ -667,6 +638,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
