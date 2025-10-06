@@ -90,7 +90,12 @@ def handle_full_regeneration(model):
             if not document_files:
                 st.warning("No se encontraron archivos en la carpeta 'Pliegos' para analizar."); return False
 
-            contenido_ia = [PROMPT_PLIEGOS]
+            # ===== CAMBIO AQUÍ =====
+            idioma_seleccionado = st.session_state.get('project_language', 'Español')
+            prompt_con_idioma = PROMPT_PLIEGOS.format(idioma=idioma_seleccionado)
+            contenido_ia = [prompt_con_idioma]
+            # ===== FIN DEL CAMBIO =====
+
             for file in document_files:
                 file_content_bytes = download_file_from_drive(service, file['id'])
                 contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
@@ -107,8 +112,6 @@ def handle_full_regeneration(model):
                 st.error("La IA devolvió una respuesta vacía o no válida."); return False
         except Exception as e:
             st.error(f"Ocurrió un error durante la regeneración completa: {e}"); return False
-
-# app.py (Sección final corregida)
 
 # =============================================================================
 #                        LÓGICA PRINCIPAL (ROUTER)
@@ -170,5 +173,6 @@ else:
     else:
         st.error(f"Página '{page}' no reconocida. Volviendo a la selección de proyecto.")
         go_to_project_selection()
+
 
 
