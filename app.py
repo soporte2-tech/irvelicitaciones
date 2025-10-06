@@ -12,13 +12,21 @@ import json
 import time
 
 # =============================================================================
-#           BLOQUE DE IMPORTACIONES DE OTROS MÓDULOS
+#           BLOQUE DE IMPORTACIONES DE OTROS MÓDulos
 # =============================================================================
 
 from auth import get_credentials, build_drive_service
+# Asegúrate de que los nombres de las funciones importadas coincidan con los de tu ui_pages.py
 from ui_pages import (
-    landing_page, project_selection_page, phase_1_page, phase_1_results_page,
-    phase_2_page, phase_3_page, phase_4_page, phase_5_page
+    landing_page, 
+    project_selection_page,
+    phase_1_viability_page, # Nueva fase
+    phase_2_structure_page, # Antigua phase_1_page
+    phase_2_results_page,   # Antigua phase_1_results_page
+    phase_3_page,           # Antigua phase_2_page
+    phase_4_page,           # Antigua phase_3_page
+    phase_5_page,           # Antigua phase_4_page
+    phase_6_page            # Antigua phase_5_page
 )
 from prompts import PROMPT_PLIEGOS
 from utils import limpiar_respuesta_json
@@ -36,32 +44,36 @@ if 'page' not in st.session_state: st.session_state.page = 'landing'
 if 'credentials' not in st.session_state: st.session_state.credentials = None
 if 'drive_service' not in st.session_state: st.session_state.drive_service = None
 if 'selected_project' not in st.session_state: st.session_state.selected_project = None
+
+# Estados específicos del proyecto
+if 'requisitos_extraidos' not in st.session_state: st.session_state.requisitos_extraidos = None
+if 'generated_structure' not in st.session_state: st.session_state.generated_structure = None
+if 'uploaded_pliegos' not in st.session_state: st.session_state.uploaded_pliegos = None
 if 'generated_doc_buffer' not in st.session_state: st.session_state.generated_doc_buffer = None
 if 'generated_doc_filename' not in st.session_state: st.session_state.generated_doc_filename = ""
 if 'refined_doc_buffer' not in st.session_state: st.session_state.refined_doc_buffer = None
 if 'refined_doc_filename' not in st.session_state: st.session_state.refined_doc_filename = ""
-if 'generated_structure' not in st.session_state: st.session_state.generated_structure = None
-if 'uploaded_pliegos' not in st.session_state: st.session_state.uploaded_pliegos = None
 
 
-# --- Funciones de Navegación ---
+# --- Funciones de Navegación (NUEVO FLUJO) ---
 # Estas funciones modifican el estado para cambiar de página.
 def go_to_landing(): st.session_state.page = 'landing'
 def go_to_project_selection(): st.session_state.page = 'project_selection'
-def go_to_phase1(): st.session_state.page = 'phase_1'
-def go_to_phase1_results(): st.session_state.page = 'phase_1_results'
-def go_to_phase2(): st.session_state.page = 'phase_2'
-def go_to_phase3(): st.session_state.page = 'phase_3'
-def go_to_phase4(): st.session_state.page = 'phase_4'
-def go_to_phase5(): st.session_state.page = 'phase_5'
+def go_to_phase1(): st.session_state.page = 'phase_1_viability'
+def go_to_phase2(): st.session_state.page = 'phase_2_structure'
+def go_to_phase2_results(): st.session_state.page = 'phase_2_results'
+def go_to_phase3(): st.session_state.page = 'phase_3_guiones'
+def go_to_phase4(): st.session_state.page = 'phase_4_prompts'
+def go_to_phase5(): st.session_state.page = 'phase_5_redaccion'
+def go_to_phase6(): st.session_state.page = 'phase_6_ensamblaje'
 
 # --- Función de Limpieza ---
 def back_to_project_selection_and_cleanup():
     """Limpia el estado de la sesión relacionado con un proyecto específico."""
     keys_to_clear = [
-        'generated_structure', 'word_file', 'uploaded_template', 
-        'uploaded_pliegos', 'selected_project', 'generated_doc_buffer', 
-        'refined_doc_buffer', 'generated_doc_filename', 'refined_doc_filename'
+        'requisitos_extraidos', 'generated_structure', 'uploaded_pliegos', 
+        'selected_project', 'generated_doc_buffer', 'refined_doc_buffer', 
+        'generated_doc_filename', 'refined_doc_filename'
     ]
     for key in keys_to_clear:
         if key in st.session_state:
@@ -75,12 +87,12 @@ def back_to_project_selection_and_cleanup():
 def handle_full_regeneration(model):
     """
     Función que genera un índice desde cero analizando los archivos de 'Pliegos'.
-    Se mantiene aquí porque es una lógica de app, no una página de UI.
+    Esta función se usa en la FASE 2.
     """
     if not st.session_state.get('drive_service') or not st.session_state.get('selected_project'):
         st.error("Error de sesión. No se puede iniciar la regeneración."); return False
 
-    with st.spinner("Descargando archivos de 'Pliegos' y re-analizando desde cero..."):
+    with st.spinner("Descargando archivos de 'Pliegos' y re-analizando para generar índice..."):
         try:
             service = st.session_state.drive_service
             project_folder_id = st.session_state.selected_project['id']
@@ -90,11 +102,10 @@ def handle_full_regeneration(model):
             if not document_files:
                 st.warning("No se encontraron archivos en la carpeta 'Pliegos' para analizar."); return False
 
-            # ===== CAMBIO AQUÍ =====
             idioma_seleccionado = st.session_state.get('project_language', 'Español')
+            # Usa el prompt correcto para la generación del índice
             prompt_con_idioma = PROMPT_PLIEGOS.format(idioma=idioma_seleccionado)
             contenido_ia = [prompt_con_idioma]
-            # ===== FIN DEL CAMBIO =====
 
             for file in document_files:
                 file_content_bytes = download_file_from_drive(service, file['id'])
@@ -125,54 +136,58 @@ if not credentials:
     landing_page()
 else:
     # 3. Si hay credenciales, configura los servicios (una sola vez).
-    # Este bloque 'try-except' es para evitar que se reconfigure en cada rerun.
     try:
         if 'drive_service' not in st.session_state or st.session_state.drive_service is None:
             st.session_state.drive_service = build_drive_service(credentials)
         
-        # Es buena práctica configurar esto también solo si no está ya hecho
         if 'gemini_model' not in st.session_state:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            st.session_state.gemini_model = genai.GenerativeModel('models/gemini-2.5-flash')
+            st.session_state.gemini_model = genai.GenerativeModel('models/gemini-1.5-flash')
 
         model = st.session_state.gemini_model
 
     except Exception as e:
         st.error(f"Error en la configuración de servicios. Detalle: {e}")
-        # Limpiamos credenciales por si el error es de token inválido
         del st.session_state['credentials']
         st.button("Reintentar conexión", on_click=go_to_landing)
         st.stop()
         
-    # --- ¡CORRECCIÓN CLAVE! ---
-    # Si estamos autenticados pero la página de sesión sigue siendo 'landing',
-    # significa que acabamos de iniciar sesión. Forzamos el paso a la siguiente página.
+    # Si acabamos de iniciar sesión, pasamos a la selección de proyecto.
     if st.session_state.page == 'landing':
         go_to_project_selection()
-        # Forzamos un rerun para que el router de abajo ya entre con la página correcta.
         st.rerun()
 
     # 4. Router: Llama a la función de la página actual según el estado.
     page = st.session_state.page
     
-    # Ya no necesitamos el 'if page == 'landing'' aquí porque la corrección de arriba lo maneja.
     if page == 'project_selection':
+        # De aquí, el usuario irá a la Fase 1 de Viabilidad
         project_selection_page(go_to_landing, go_to_phase1)
-    elif page == 'phase_1':
-        phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup)
-    elif page == 'phase_1_results':
-        phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration)
-    elif page == 'phase_2':
-        phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3)
-    elif page == 'phase_3':
-        phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4)
-    elif page == 'phase_4':
+        
+    elif page == 'phase_1_viability':
+        phase_1_viability_page(model, go_to_project_selection, go_to_phase2)
+        
+    elif page == 'phase_2_structure':
+        phase_2_structure_page(model, go_to_phase1, go_to_phase2_results, handle_full_regeneration, back_to_project_selection_and_cleanup)
+        
+    elif page == 'phase_2_results':
+        phase_2_results_page(model, go_to_phase2, go_to_phase3, handle_full_regeneration)
+        
+    elif page == 'phase_3_guiones':
+        phase_3_page(model, go_to_phase2_results, go_to_phase4)
+        
+    elif page == 'phase_4_prompts':
         phase_4_page(model, go_to_phase3, go_to_phase5)
-    elif page == 'phase_5':
-        phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_and_cleanup)
+        
+    elif page == 'phase_5_redaccion':
+        phase_5_page(model, go_to_phase4, go_to_phase6)
+        
+    elif page == 'phase_6_ensamblaje':
+        phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup)
+        
     else:
         st.error(f"Página '{page}' no reconocida. Volviendo a la selección de proyecto.")
         go_to_project_selection()
-
+        st.rerun()
 
 
