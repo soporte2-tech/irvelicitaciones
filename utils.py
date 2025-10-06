@@ -13,31 +13,32 @@ from pypdf import PdfReader
 #           FUNCIONES DE PROCESAMIENTO DE TEXTO Y JSON
 # =============================================================================
 
+# --- NUEVA FUNCIÓN MÁS ROBUSTA ---
 def limpiar_respuesta_json(texto_sucio):
     """
-    Limpia de forma robusta la respuesta de texto de la IA para extraer un objeto JSON válido.
-    Elimina los marcadores de código, espacios en blanco y cualquier texto antes o después del JSON.
+    Limpia de forma muy agresiva la respuesta de texto de la IA para extraer un objeto JSON válido.
+    Busca el primer '{' y el último '}' en la cadena, ignorando todo lo demás.
     """
     if not isinstance(texto_sucio, str):
         return ""
 
-    # 1. Eliminar espacios en blanco, saltos de línea, etc., al principio y al final.
-    texto_limpio = texto_sucio.strip()
+    try:
+        # Encuentra la posición del primer corchete de apertura
+        start_index = texto_sucio.find('{')
+        # Encuentra la posición del último corchete de cierre
+        end_index = texto_sucio.rfind('}')
 
-    # 2. Eliminar los ```json y ``` que a veces añade el modelo.
-    texto_limpio = re.sub(r'^```(?:json)?\s*', '', texto_limpio, flags=re.IGNORECASE)
-    texto_limpio = re.sub(r'```$', '', texto_limpio)
-
-    # 3. Volver a limpiar por si acaso quedaran espacios después de quitar los ```
-    texto_limpio = texto_limpio.strip()
-
-    # 4. Búsqueda prioritaria: cualquier objeto JSON en el texto
-    match_objeto = re.search(r'\{.*\}', texto_limpio, re.DOTALL)
-    if match_objeto:
-        return match_objeto.group(0).strip()
-        
-    return "" # Devuelve una cadena vacía si no se puede encontrar un JSON válido
-
+        # Si ambos se encuentran y están en el orden correcto
+        if start_index != -1 and end_index != -1 and end_index > start_index:
+            # Extrae la subcadena que contiene el JSON
+            json_str = texto_sucio[start_index:end_index + 1]
+            return json_str
+        else:
+            # Si no se encuentra un JSON válido, devuelve una cadena vacía
+            return ""
+    except Exception:
+        # En caso de cualquier otro error, devuelve una cadena vacía
+        return ""
 
 def limpiar_respuesta_final(texto_ia):
     """
@@ -234,4 +235,5 @@ def html_a_imagen(html_string, output_filename="temp_image.png"):
     except Exception as e:
         st.error(f"Error al convertir HTML a imagen: {e}")
         return None
+
 
