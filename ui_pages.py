@@ -100,6 +100,8 @@ def project_selection_page(go_to_landing, go_to_phase1):
 
 # En ui_pages.py, añade esta nueva función
 
+# ui_pages.py (Pega esta función completa reemplazando la existente)
+
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
@@ -112,7 +114,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
-    # Lógica de gestión de archivos (igual que antes)
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
     
@@ -147,8 +148,8 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
         with st.spinner("🧠 Analizando pliegos para extraer los requisitos clave..."):
+            # --- NUEVO BLOQUE CON DEPURACIÓN ---
             try:
-                # Elige un idioma por defecto si no está seteado
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
                 contenido_ia = [prompt_con_idioma]
@@ -156,16 +157,26 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                 for file in document_files:
                     file_content_bytes = download_file_from_drive(service, file['id'])
                     contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
-
+            
                 response = model.generate_content(contenido_ia, generation_config={"response_mime_type": "application/json"})
-                json_limpio_str = limpiar_respuesta_json(response.text)
                 
+                # --- LÍNEAS DE DEPURACIÓN AÑADIDAS ---
+                st.warning("Respuesta BRUTA recibida de la IA:")
+                st.code(response.text, language='text')
+                # ------------------------------------
+                
+                json_limpio_str = limpiar_respuesta_json(response.text)
+            
+                # --- LÍNEAS DE DEPURACIÓN AÑADIDAS ---
+                st.info("Texto después de la limpieza (antes de convertir a JSON):")
+                st.code(json_limpio_str, language='json')
+                # ------------------------------------
+            
                 if json_limpio_str:
-                    # Guardamos los requisitos en el estado de la sesión
                     st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
                     st.toast("✅ ¡Requisitos extraídos con éxito!")
                 else:
-                    st.error("La IA devolvió una respuesta vacía o no válida.")
+                    st.error("La función de limpieza no pudo extraer un JSON válido.")
             except Exception as e:
                 st.error(f"Ocurrió un error durante la extracción de requisitos: {e}")
 
@@ -175,7 +186,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
         st.success("Análisis de viabilidad completado:")
         
         with st.container(border=True):
-            # Sección de Resumen
             st.subheader("📊 Resumen de la Licitación")
             resumen = requisitos.get('resumen_licitacion', {})
             col1, col2, col3 = st.columns(3)
@@ -183,7 +193,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
             col2.metric("Duración Contrato", resumen.get('duracion_contrato', 'N/D'))
             col3.metric("Admite Lotes", resumen.get('admite_lotes', 'N/D'))
 
-            # Sección de Solvencia
             st.markdown("---")
             st.subheader("📋 Requisitos de Solvencia y Certificados")
             solvencia = requisitos.get('requisitos_solvencia_certificados', [])
@@ -193,7 +202,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
             else:
                 st.markdown("_No se encontraron requisitos específicos de solvencia._")
 
-            # Sección de Condiciones
             st.markdown("---")
             st.subheader("⚠️ Condiciones Específicas del Contrato")
             condiciones = requisitos.get('condiciones_especificas', [])
@@ -950,6 +958,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
