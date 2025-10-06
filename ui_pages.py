@@ -9,8 +9,9 @@ import os
 import time
 import docx
 from pypdf import PdfReader
-from prompts import PROMPT_GPT_TABLA_PLANIFICACION, PROMPT_REGENERACION, PROMPT_DESARROLLO, PROMPT_GENERAR_INTRODUCCION
-
+from prompts import (
+PROMPT_GPT_TABLA_PLANIFICACION, PROMPT_REGENERACION, PROMPT_DESARROLLO, PROMPT_GENERAR_INTRODUCCION, PROMPT_PLIEGOS, PROMPT_REQUISITOS_CLAVE
+)
 # Importamos las funciones que necesitamos de nuestros otros módulos
 from drive_utils import (
     find_or_create_folder, get_files_in_project, delete_file_from_drive,
@@ -223,7 +224,7 @@ def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results,
     project_folder_id = st.session_state.selected_project['id']
     service = st.session_state.drive_service
 
-    st.markdown(f"<h3>FASE 1: Análisis y Estructura</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3>FASE 2: Análisis y Estructura</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
     st.selectbox(
@@ -290,7 +291,7 @@ def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results,
 # =============================================================================
 
 def phase_2_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration):
-    st.markdown("<h3>FASE 1: Revisión de Resultados</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>FASE 2: Revisión de Resultados</h3>", unsafe_allow_html=True)
     st.markdown("Revisa el índice, la guía de redacción y el plan estratégico. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
     st.markdown("---")
     st.button("← Volver a la gestión de archivos", on_click=go_to_phase1)
@@ -387,7 +388,7 @@ def phase_2_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
         with col2:
             st.button("🔁 Regenerar Todo desde Cero", on_click=lambda: handle_full_regeneration(model), use_container_width=True, help="Descarta este análisis y genera uno nuevo desde cero analizando los pliegos otra vez.")
 
-        if st.button("Aceptar y Pasar a Fase 2 →", type="primary", use_container_width=True):
+        if st.button("Aceptar y Pasar a Fase 3 →", type="primary", use_container_width=True):
             with st.spinner("Sincronizando carpetas y guardando análisis final en Drive..."):
                 try:
                     service = st.session_state.drive_service
@@ -410,9 +411,9 @@ def phase_2_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
                 except Exception as e:
                     st.error(f"Ocurrió un error durante la sincronización o guardado: {e}")
                     
-def phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3):
+def phase_3_page(model, go_to_phase2_results, go_to_phase4):
     USE_GPT_MODEL = True
-    st.markdown("<h3>FASE 2: Centro de Mando de Guiones</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>FASE 3: Centro de Mando de Guiones</h3>", unsafe_allow_html=True)
     st.markdown("Gestiona tus guiones de forma individual o selecciónalos para generarlos en lote.")
     st.markdown("---")
     service = st.session_state.drive_service
@@ -427,8 +428,8 @@ def phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3):
                 st.session_state.generated_structure = json.loads(index_content_bytes.getvalue().decode('utf-8'))
                 st.rerun()
             else:
-                st.warning("No se ha encontrado un índice guardado. Por favor, vuelve a la Fase 1 para generar uno.")
-                if st.button("← Ir a Fase 1"): go_to_phase1(); st.rerun()
+                st.warning("No se ha encontrado un índice guardado. Por favor, vuelve a la Fase 2 para generar uno.")
+                if st.button("← Ir a Fase 2"): go_to_phase1(); st.rerun()
                 return
         except Exception as e:
             st.error(f"Error al cargar el índice desde Drive: {e}")
@@ -569,11 +570,11 @@ def phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3):
                                 if ejecutar_generacion_con_gemini(model, subapartado_titulo, matiz): st.rerun()
     st.markdown("---")
     col_nav1, col_nav2 = st.columns(2)
-    with col_nav1: st.button("← Volver a Revisión de Índice (F1)", on_click=go_to_phase1_results, use_container_width=True)
-    with col_nav2: st.button("Ir a Plan de Prompts (F3) →", on_click=go_to_phase3, use_container_width=True)
+    with col_nav1: st.button("← Volver a Revisión de Índice (F2)", on_click=go_to_phase1_results, use_container_width=True)
+    with col_nav2: st.button("Ir a Plan de Prompts (F4) →", on_click=go_to_phase3, use_container_width=True)
 
-def phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4):
-    st.markdown("<h3>FASE 3: Centro de Mando de Prompts</h3>", unsafe_allow_html=True)
+def phase_4_page(model, go_to_phase3, go_to_phase5):
+    st.markdown("<h3>FASE 4: Centro de Mando de Prompts</h3>", unsafe_allow_html=True)
     st.markdown("Genera planes de prompts de forma individual o selecciónalos para procesarlos en lote.")
     st.markdown("---")
     service = st.session_state.drive_service
@@ -590,7 +591,7 @@ def phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4):
             st.rerun()
         else:
             st.warning("No se ha encontrado un índice. Vuelve a Fase 1 para generarlo.")
-            if st.button("← Ir a Fase 1"): go_to_phase1(); st.rerun()
+            if st.button("← Ir a Fase 2"): go_to_phase1(); st.rerun()
             return
 
     estructura = st.session_state.generated_structure.get('estructura_memoria', [])
@@ -829,11 +830,11 @@ def phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4):
     st.button("🚀 Unificar y Guardar Plan de Prompts Conjunto", on_click=handle_conjunto_generation, use_container_width=True, type="primary", help="Unifica todos los planes individuales generados en un único archivo maestro.")
     col_nav3_1, col_nav3_2 = st.columns(2)
     with col_nav3_1:
-        st.button("← Volver al Centro de Mando (F2)", on_click=go_to_phase2, use_container_width=True)
+        st.button("← Volver al Centro de Mando (F3)", on_click=go_to_phase2, use_container_width=True)
     with col_nav3_2:
-        st.button("Ir a Redacción Final (F4) →", on_click=go_to_phase4, use_container_width=True)
-def phase_4_page(model, go_to_phase3, go_to_phase5):
-    st.markdown("<h3>FASE 4: Redacción del Cuerpo del Documento</h3>", unsafe_allow_html=True)
+        st.button("Ir a Redacción Final (F5) →", on_click=go_to_phase4, use_container_width=True)
+def phase_5_page(model, go_to_phase4, go_to_phase6):
+    st.markdown("<h3>FASE 5: Redacción del Cuerpo del Documento</h3>", unsafe_allow_html=True)
     st.markdown("Ejecuta el plan de prompts para generar el contenido completo de la memoria técnica.")
     st.markdown("---")
     service = st.session_state.drive_service
@@ -897,10 +898,10 @@ def phase_4_page(model, go_to_phase3, go_to_phase5):
         st.download_button(label="📄 Descargar Cuerpo del Documento (.docx)", data=st.session_state.generated_doc_buffer, file_name=st.session_state.generated_doc_filename, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
     st.markdown("---")
     col_nav1, col_nav2 = st.columns(2)
-    with col_nav1: st.button("← Volver a Fase 3 (Plan de Prompts)", on_click=go_to_phase3, use_container_width=True)
-    with col_nav2: st.button("Ir a Ensamblaje Final (F5) →", on_click=go_to_phase5, use_container_width=True, type="primary", disabled=not st.session_state.get("generated_doc_buffer"))
+    with col_nav1: st.button("← Volver a Fase 4 (Plan de Prompts)", on_click=go_to_phase3, use_container_width=True)
+    with col_nav2: st.button("Ir a Ensamblaje Final (F6) →", on_click=go_to_phase5, use_container_width=True, type="primary", disabled=not st.session_state.get("generated_doc_buffer"))
 
-def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_and_cleanup):
+def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     st.markdown("<h3>FASE 5: Ensamblaje del Documento Final</h3>", unsafe_allow_html=True)
     st.markdown("Este es el último paso. Se añadirá un índice y una introducción profesional al documento.")
     st.markdown("---")
@@ -947,8 +948,9 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
         st.download_button(label="🏆 Descargar Versión Definitiva (.docx)", data=st.session_state.refined_doc_buffer, file_name=st.session_state.refined_doc_filename, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
     st.markdown("---")
     col_nav1, col_nav2 = st.columns(2)
-    with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
+    with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
