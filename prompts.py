@@ -179,7 +179,8 @@ Te proporcionaré DOS elementos clave:
 PROMPT_PREGUNTAS_TECNICAS_INDIVIDUAL = """
 **[ROL Y OBJETIVO ABSOLUTAMENTE CRÍTICO]**
 Tu ÚNICA función es actuar como un **ANALISTA DE REQUISITOS**. NO eres un escritor, NO eres un consultor, NO eres un redactor. Eres un analista que extrae información y la organiza en una tabla.
-
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 **[TAREA ÚNICA Y EXCLUSIVA]**
 Analiza el contexto proporcionado (análisis de pliegos, indicaciones, etc.) para el subapartado y completa la siguiente **TABLA DE PLANIFICACIÓN EN MARKDOWN**.
 Tu respuesta debe ser **ÚNICA Y EXCLUSIVAMENTE LA TABLA**. No incluyas ningún texto antes o después de la tabla. No escribas introducciones ni conclusiones. SOLO LA TABLA.
@@ -216,7 +217,8 @@ Te proporcionaré TRES elementos clave:
 3.  Las INSTRUCCIONES DE UN USUARIO con los cambios que desea.
 
 Tu única tarea es generar una **NUEVA VERSIÓN MEJORADA** del objeto JSON que incorpore a la perfección los cambios solicitados por el usuario.
-
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 ## REGLAS OBLIGATORIAS:
 -   **MANTÉN TODAS LAS REGLAS DEL PROMPT ORIGINAL:** El formato de salida debe seguir siendo un JSON válido con las claves "estructura_memoria" y "matices_desarrollo", la numeración debe ser correcta (1, 1.1, etc.), y las indicaciones deben ser detalladas.
 -   **INCORPORA EL FEEDBACK:** Lee atentamente las instrucciones del usuario y aplícalas a la nueva estructura. Por ejemplo, si pide "une los apartados 1.1 y 1.2", debes hacerlo. Si pide "el apartado 2 debe hablar sobre la experiencia del equipo", debes modificar las indicaciones de ese apartado.
@@ -268,7 +270,8 @@ Your response must be a single, valid JSON object containing a list of prompts.
 
 PROMPT_GENERAR_INTRODUCCION = """
 Actúas como un estratega experto en la redacción de propuestas de licitación. Tu tarea es escribir un apartado de **Introducción** conciso y persuasivo, basándote en el contenido completo de la memoria técnica que te proporcionaré.
-
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 ## REGLAS ESTRICTAS:
 1.  **ENFOQUE EN LA SOLUCIÓN:** No te limites a describir el documento ("En esta memoria se describirá..."). En su lugar, resume la **propuesta de valor** y la solución que se ofrece. Empieza con fuerza.
 2.  **SÍNTESIS ESTRATÉGICA:** Lee y comprende la totalidad del documento para identificar los puntos más fuertes de la propuesta (ej: una metodología innovadora, un equipo experto, mejoras significativas) y destácalos brevemente.
@@ -281,7 +284,8 @@ Actúas como un estratega experto en la redacción de propuestas de licitación.
 
 PROMPT_COHESION_FINAL = """
 Actúas como un Editor Técnico experto. Tu única misión es mejorar la cohesión y el flujo de un borrador de memoria técnica. NO debes reescribir apartados enteros ni eliminar contenido. Tu trabajo es puramente de conexión y pulido.
-
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 Te proporcionaré el texto completo del borrador. Debes devolver una versión mejorada aplicando ÚNICAMENTE las siguientes reglas:
 
 1.  **AÑADIR REFERENCIAS CRUZADAS (TAREA PRINCIPAL):** Cuando un apartado mencione un concepto ya introducido, AÑADE una referencia explícita. Ejemplos: "...se utilizará la metodología Agile-Scrum **descrita en el apartado 1.1**.", "...a través de Jira, **la herramienta seleccionada para la gestión (ver sección 1.5)**."
@@ -302,7 +306,8 @@ Tu ÚNICA función es actuar como un **ANALISTA DE REQUISITOS**. NO eres un escr
 **[TAREA ÚNICA Y EXCLUSIVA]**
 Analiza el contexto proporcionado por el usuario y completa la siguiente **TABLA DE PLANIFICACIÓN EN MARKDOWN**.
 Tu respuesta debe ser **ÚNICA Y EXCLUSIVAMENTE LA TABLA**. No incluyas ningún texto antes o después de la tabla. No escribas introducciones ni conclusiones. SOLO LA TABLA.
-
+**ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
+Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
 **[FORMATO DE SALIDA ESTRICTO E INNEGOCIABLE: TABLA MARKDOWN]**
 Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 
@@ -326,6 +331,7 @@ Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 **[ACCIÓN]**
 Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
 """
+
 
 
 
