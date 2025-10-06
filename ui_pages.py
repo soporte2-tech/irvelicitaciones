@@ -106,7 +106,7 @@ def project_selection_page(go_to_landing, go_to_phase1):
 # AHORA ACEPTA LAS FUNCIONES QUE NECESITA
 def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration):
     st.markdown("<h3>FASE 1: Revisión de Resultados</h3>", unsafe_allow_html=True)
-    st.markdown("Revisa el índice y el plan estratégico. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
+    st.markdown("Revisa el índice, la guía de redacción y el plan estratégico. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
     st.markdown("---")
     st.button("← Volver a la gestión de archivos", on_click=go_to_phase1)
 
@@ -122,8 +122,7 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
 
         with st.spinner("🧠 Incorporando tu feedback y regenerando la estructura..."):
             try:
-                # (Aquí va tu lógica de handle_regeneration_with_feedback que ya tienes, no cambia nada)
-                contenido_ia_regeneracion = [PROMPT_REGENERACION] # Asegúrate que PROMPT_REGENERACION esté actualizado
+                contenido_ia_regeneracion = [PROMPT_REGENERACION]
                 contenido_ia_regeneracion.append("--- INSTRUCCIONES DEL USUARIO ---\n" + feedback_text)
                 contenido_ia_regeneracion.append("--- ESTRUCTURA JSON ANTERIOR A CORREGIR ---\n" + json.dumps(st.session_state.generated_structure, indent=2))
                 
@@ -140,21 +139,26 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
                 if json_limpio_str_regenerado:
                     st.session_state.generated_structure = json.loads(json_limpio_str_regenerado)
                     st.toast("¡Estructura regenerada con feedback!")
-                    st.session_state.feedback_area = ""
+                    st.session_state.feedback_area = "" # Limpia el área de texto
                 else:
                     st.error("La IA no devolvió una estructura válida tras la regeneración.")
             except Exception as e:
                 st.error(f"Ocurrió un error durante la regeneración: {e}")
 
-    # ===== INICIO DE LA MODIFICACIÓN =====
-    # Este es el contenedor principal que ya tenías.
-    # Vamos a añadir el nuevo bloque DENTRO de él.
+    # ===== INICIO DEL CONTENEDOR PRINCIPAL CON TODOS LOS CAMBIOS =====
     with st.container(border=True):
-        st.subheader("Índice Propuesto")
-        # Esta es la línea que ya tenías para mostrar el índice
-        mostrar_indice_desplegable(st.session_state.generated_structure.get('estructura_memoria'))
-
-        # AÑADE ESTE NUEVO BLOQUE JUSTO DEBAJO
+        
+        # 1. MUESTRA EL ÍNDICE CON LAS INDICACIONES INTEGRADAS
+        # ----------------------------------------------------------------------
+        st.subheader("Índice Propuesto y Guía de Redacción")
+        
+        estructura = st.session_state.generated_structure.get('estructura_memoria')
+        matices = st.session_state.generated_structure.get('matices_desarrollo')
+        
+        # Llama a la función de utils.py que ahora muestra el índice y las indicaciones
+        mostrar_indice_desplegable(estructura, matices)
+        
+        # 2. MUESTRA EL PLAN ESTRATÉGICO
         # ----------------------------------------------------------------------
         st.markdown("---")
         st.subheader("📊 Plan Estratégico del Documento")
@@ -163,7 +167,7 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
         plan = st.session_state.generated_structure.get('plan_extension', [])
 
         if not config and not plan:
-            st.warning("No se detectaron parámetros estratégicos (páginas, puntos) en los pliegos.")
+            st.warning("No se detectaron parámetros estratégicos (páginas, puntos) en los pliegos. Puedes añadirlos mediante feedback.")
         else:
             col1, col2 = st.columns(2)
             with col1:
@@ -178,32 +182,28 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
 
             if plan:
                 st.write("**Distribución de Contenido Sugerida (Páginas por Apartado):**")
-                # Muestra la tabla de distribución de páginas
                 st.dataframe(plan, use_container_width=True, hide_index=True)
-        # ----------------------------------------------------------------------
 
+        # 3. MUESTRA LA SECCIÓN DE ACCIONES Y FEEDBACK
+        # ----------------------------------------------------------------------
         st.markdown("---")
         st.subheader("Validación y Siguiente Paso")
         
-        # Este es el área de texto que ya tenías, pero con un placeholder mejorado.
         st.text_area(
-            "Si necesitas cambios en el índice o en el plan, indícalos aquí:",
+            "Si necesitas cambios en el índice, el plan o las indicaciones, descríbelos aquí:",
             key="feedback_area",
-            placeholder="Ej: 'El límite real son 40 páginas, reajusta la distribución.' o 'El apartado 2 vale 30 puntos, no 20.' o 'Añade un subapartado sobre Sostenibilidad en el punto 1.'"
+            placeholder="Ejemplos:\n- 'El límite real son 40 páginas, reajusta la distribución.'\n- 'En el apartado 2, une los subapartados 2.1 y 2.2.'\n- 'En las indicaciones de 1.1, añade que se debe incluir un cronograma visual.'"
         )
         
-        # Estas son las columnas con los botones que ya tenías.
         col1, col2 = st.columns(2)
         with col1:
             st.button("Regenerar con Feedback", on_click=handle_regeneration_with_feedback, use_container_width=True)
         with col2:
-            st.button("🔁 Regenerar Índice Entero", on_click=lambda: handle_full_regeneration(model), use_container_width=True, help="Descarta este índice y genera uno nuevo desde cero analizando los pliegos otra vez.")
+            st.button("🔁 Regenerar Todo desde Cero", on_click=lambda: handle_full_regeneration(model), use_container_width=True, help="Descarta este análisis y genera uno nuevo desde cero analizando los pliegos otra vez.")
 
-        # Este es el botón final que ya tenías.
-        if st.button("Aceptar Índice y Plan, y Pasar a Fase 2 →", type="primary", use_container_width=True):
-            with st.spinner("Sincronizando carpetas y guardando índice final en Drive..."):
+        if st.button("Aceptar y Pasar a Fase 2 →", type="primary", use_container_width=True):
+            with st.spinner("Sincronizando carpetas y guardando análisis final en Drive..."):
                 try:
-                    # (Tu lógica para sincronizar y guardar el JSON en Drive se queda igual)
                     service = st.session_state.drive_service
                     project_folder_id = st.session_state.selected_project['id']
                     deleted_count = sync_guiones_folders_with_index(service, project_folder_id, st.session_state.generated_structure)
@@ -218,7 +218,7 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
                     if saved_index_id:
                         delete_file_from_drive(service, saved_index_id)
                     upload_file_to_drive(service, mock_file_obj, docs_app_folder_id)
-                    st.toast("Índice final guardado en tu proyecto de Drive.")
+                    st.toast("Análisis final guardado en tu proyecto de Drive.")
                     go_to_phase2()
                     st.rerun()
                 except Exception as e:
@@ -638,6 +638,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
