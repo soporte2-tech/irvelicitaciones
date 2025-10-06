@@ -158,164 +158,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
         with st.spinner("🧠 Leyendo pliegos y extrayendo requisitos..."):
-            texto_pliegos_combinado = ""
-            for file in document_files:
-                st.info(f"Procesando archivo: {file['name']}...")
-                file_content_bytes = download_file_from_drive(service, file['id'])
-                texto_extraido = ""
-                try:
-                    if file['name'].lower().endswith('.pdf'):
-                        reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
-                        texto_extraido = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-                    elif file['name'].lower().endswith('.docx'):
-                        doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
-                        texto_extraido = "\n".join(para.text for para in doc.paragraphs)
-                    
-                    texto_pliegos_combinado += f"\n\n--- INICIO DEL DOCUMENTO: {file['name']} ---\n\n{texto_extraido}\n\n--- FIN DEL DOCUMENTO: {file['name']} ---\n\n"
-                except Exception as ex_file:
-                    st.warning(f"No se pudo procesar el archivo '{file['name']}'. Puede estar escaneado o dañado. Error: {ex_file}")
-
-            if not texto_pliegos_combinado.strip():
-                st.error("No se pudo extraer texto de ninguno de los documentos. Por favor, asegúrate de que no son PDFs escaneados (imágenes).")
-                st.stop()
-            
-            try:
-                idioma_seleccionado = st.session_state.get('project_language', 'Español')
-                prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
-                contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
-                response = model.generate_content(contenido_ia)
-                
-                if not response.candidates:
-                    st.error("La IA no generó una respuesta. Esto puede deberse a los filtros de seguridad.")
-                    try:
-                        feedback = response.prompt_feedback
-                        st.warning(f"Razón del bloqueo: {feedback.block_reason}")
-                        st.json([rating.__dict__ for rating in feedback.safety_ratings])
-                    except Exception:
-                        st.warning("No se pudo obtener información detallada del bloqueo.")
-                    st.stop()
-
-                respuesta_texto = response.text
-                json_limpio_str = limpiar_respuesta_json(respuesta_texto)
-            
-                if json_limpio_str:
-                    st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
-                    st.toast("✅ ¡Requisitos extraídos con éxito!")
-                    st.rerun()
-                else:
-                    st.error("La IA respondió, pero no se pudo extraer un JSON válido de su respuesta.")
-                    st.warning("Respuesta BRUTA recibida de la IA:")
-                    st.code(respuesta_texto, language='text')
-            except Exception as e:
-                st.error(f"Ocurrió un error crítico durante el proceso: {e}")
-                st.error(f"Tipo de error: {type(e).__name__}")
-
-    # --- INICIO DE LA CORRECCIÓN CLAVE ---
-    # Mostrar los requisitos de forma segura si ya han sido extraídos
-    if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
-        requisitos = st.session_state.requisitos_extraidos
-        
-        # (Opcional) Descomenta la siguiente línea para ver en la app el JSON exacto que devuelve la IA. Muy útil para depurar.
-        # st.json(requisitos)
-
-        st.success("Análisis de viabilidad completado:")
-        with st.container(border=True):
-            st.subheader("📊 Resumen de la Licitación")
-            # Usamos .get() para acceder de forma segura. Si 'resumen_licitacion' no existe, devuelve un diccionario vacío {}
-            resumen = requisitos.get('resumen_licitacion', {})
-            col1, col2, col3 = st.columns(3)
-            # Accedemos a las claves del resumen también con .get() para máxima seguridad
-            col1.metric("Presupuesto Base", resumen.get('presupuesto_base', 'N/D'))
-            col2.metric("Duración Contrato", resumen.get('duracion_contrato', 'N/D'))
-            col3.metric("Admite Lotes", resumen.get('admite_lotes', 'N/D'))
-            st.markdown("---")
-            
-            st.subheader("📋 Requisitos de Solvencia y Certificados")
-            # Si 'requisitos_solvencia_certificados' no existe, devuelve una lista vacía []
-            solvencia = requisitos.get('requisitos_solvencia_certificados', [])
-            if isinstance(solvencia, list) and solvencia:
-                for item in solvencia: st.markdown(f"- {item}")
-            else:
-                st.markdown("_No se encontraron requisitos específicos de solvencia._")
-            st.markdown("---")
-            
-            st.subheader("⚠️ Condiciones Específicas del Contrato")
-            # Si 'condiciones_especificas' no existe, devuelve una lista vacía []
-            condiciones = requisitos.get('condiciones_especificas', [])
-            if isinstance(condiciones, list) and condiciones:
-                for item in condiciones: st.markdown(f"- {item}")
-            else:
-                st.markdown("_No se encontraron condiciones específicas relevantes._")
-
-        st.markdown("---")
-        st.button("Continuar a Generación de Índice (Fase 2) →", on_click=go_to_phase2, use_container_width=True, type="primary")
-
-    st.write("")
-    st.markdown("---")
-    st.button("← Volver a Selección de Proyecto", on_click=go_to_project_selection, use_container_width=True)
-# =============================================================================
-#           FASE 1: ANÁLISIS Y ESTRUCTURA
-# =============================================================================
-
-# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión completa y mejorada:
-
-def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
-    if not st.session_state.get('selected_project'):
-        st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
-        go_to_project_selection(); st.rerun()
-
-    project_name = st.session_state.selected_project['name']
-    project_folder_id = st.session_state.selected_project['id']
-    service = st.session_state.drive_service
-
-    st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
-    st.info(f"Estás trabajando en el proyecto: **{project_name}**")
-    
-    def limpiar_respuesta_json(texto_sucio):
-        if not isinstance(texto_sucio, str): return ""
-        try:
-            start_index = texto_sucio.find('{')
-            end_index = texto_sucio.rfind('}')
-            if start_index != -1 and end_index != -1 and end_index > start_index:
-                return texto_sucio[start_index:end_index + 1]
-            return ""
-        except Exception: return ""
-
-    pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
-    document_files = get_files_in_project(service, pliegos_folder_id)
-    
-    # ... (El código para mostrar y subir archivos permanece igual) ...
-    if document_files:
-        st.success("Hemos encontrado estos archivos en la carpeta 'Pliegos' de tu proyecto:")
-        with st.container(border=True):
-            for file in document_files:
-                cols = st.columns([4, 1])
-                cols[0].write(f"📄 **{file['name']}**")
-                if cols[1].button("Eliminar", key=f"del_{file['id']}", type="secondary"):
-                    with st.spinner(f"Eliminando '{file['name']}'..."):
-                        if delete_file_from_drive(service, file['id']):
-                            st.toast(f"Archivo '{file['name']}' eliminado."); st.rerun()
-    else:
-        st.info("La carpeta 'Pliegos' de este proyecto está vacía. Sube los archivos base.")
-
-    with st.expander("Añadir o reemplazar documentación en la carpeta 'Pliegos'", expanded=not document_files):
-        with st.container(border=True):
-            st.subheader("Subir nuevos documentos")
-            new_files_uploader = st.file_uploader("Arrastra aquí los Pliegos para analizar", type=['docx', 'pdf'], accept_multiple_files=True, key="new_files_uploader")
-            if st.button("Guardar nuevos archivos en Drive"):
-                if new_files_uploader:
-                    with st.spinner("Subiendo archivos a la carpeta 'Pliegos'..."):
-                        for file_obj in new_files_uploader:
-                            upload_file_to_drive(service, file_obj, pliegos_folder_id)
-                        st.rerun()
-                else:
-                    st.warning("Por favor, selecciona al menos un archivo para subir.")
-
-    st.markdown("---")
-    st.header("Extracción de Requisitos Clave")
-    
-    if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
-        with st.spinner("🧠 Leyendo pliegos y extrayendo requisitos..."):
             try:
                 texto_pliegos_combinado = ""
                 for file in document_files:
@@ -341,8 +183,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                 contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
                 response = model.generate_content(contenido_ia)
                 
-                # --- INICIO DE LA SECCIÓN DE DEPURACIÓN ---
-                # Mostramos la respuesta de la IA ANTES de intentar procesarla
                 with st.expander("🔍 Ver respuesta BRUTA de la IA (para depuración)"):
                     st.write("Objeto de respuesta completo:")
                     st.write(response)
@@ -351,7 +191,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                         st.code(response.text, language='text')
                     except Exception as e_text:
                         st.error(f"No se pudo acceder a `response.text`. Error: {e_text}")
-                # --- FIN DE LA SECCIÓN DE DEPURACIÓN ---
 
                 if not response.candidates:
                     st.error("La IA no generó una respuesta. Puede deberse a filtros de seguridad."); st.stop()
@@ -370,7 +209,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                 st.error(f"Ocurrió un error crítico durante el proceso: {e}")
                 st.error(f"Tipo de error: {type(e).__name__}")
 
-    # El código para mostrar los resultados ya es seguro gracias a la corrección anterior, lo mantenemos igual
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
         requisitos = st.session_state.requisitos_extraidos
         st.success("Análisis de viabilidad completado:")
@@ -1063,6 +901,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
