@@ -240,7 +240,82 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
 # =============================================================================
 #           FASE 1: REVISIÓN DE RESULTADOS
 # =============================================================================
+# =============================================================================
+#           FASE 2: ANÁLISIS Y ESTRUCTURA (ESTA ES LA FUNCIÓN QUE FALTA)
+# =============================================================================
 
+# AHORA ACEPTA LAS FUNCIONES QUE NECESITA
+def phase_2_structure_page(model, go_to_phase1, go_to_phase2_results, handle_full_regeneration, back_to_project_selection_and_cleanup):
+    if not st.session_state.get('selected_project'):
+        st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
+        go_to_project_selection(); st.rerun()
+
+    project_name = st.session_state.selected_project['name']
+    project_folder_id = st.session_state.selected_project['id']
+    service = st.session_state.drive_service
+
+    st.markdown(f"<h3>FASE 2: Análisis y Estructura</h3>", unsafe_allow_html=True)
+    st.info(f"Estás trabajando en el proyecto: **{project_name}**")
+    
+    st.selectbox(
+        "Selecciona el idioma para la redacción de la memoria:",
+        ('Español', 'Inglés', 'Catalán', 'Gallego', 'Francés', 'Euskera'), # Puedes añadir o quitar idiomas
+        key='project_language' # Guardamos la elección en el estado de la sesión
+    )
+    pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
+    document_files = get_files_in_project(service, pliegos_folder_id)
+    
+    if document_files:
+        st.success("Hemos encontrado estos archivos en la carpeta 'Pliegos' de tu proyecto:")
+        with st.container(border=True):
+            for file in document_files:
+                cols = st.columns([4, 1])
+                cols[0].write(f"📄 **{file['name']}**")
+                if cols[1].button("Eliminar", key=f"del_{file['id']}", type="secondary"):
+                    with st.spinner(f"Eliminando '{file['name']}'..."):
+                        if delete_file_from_drive(service, file['id']):
+                            st.toast(f"Archivo '{file['name']}' eliminado."); st.rerun()
+    else:
+        st.info("La carpeta 'Pliegos' de este proyecto está vacía. Sube los archivos base.")
+
+    with st.expander("Añadir o reemplazar documentación en la carpeta 'Pliegos'", expanded=not document_files):
+        with st.container(border=True):
+            st.subheader("Subir nuevos documentos")
+            new_files_uploader = st.file_uploader("Arrastra aquí los nuevos Pliegos o Plantilla", type=['docx', 'pdf'], accept_multiple_files=True, key="new_files_uploader")
+            if st.button("Guardar nuevos archivos en Drive"):
+                if new_files_uploader:
+                    with st.spinner("Subiendo archivos a la carpeta 'Pliegos'..."):
+                        for file_obj in new_files_uploader:
+                            upload_file_to_drive(service, file_obj, pliegos_folder_id)
+                        st.rerun()
+                else:
+                    st.warning("Por favor, selecciona al menos un archivo para subir.")
+
+    st.markdown("---"); st.header("Análisis y Generación de Índice")
+    
+    docs_app_folder_id = find_or_create_folder(service, "Documentos aplicación", parent_id=project_folder_id)
+    saved_index_id = find_file_by_name(service, "ultimo_indice.json", docs_app_folder_id)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Cargar último índice generado", use_container_width=True, disabled=not saved_index_id):
+            with st.spinner("Cargando índice desde Drive..."):
+                index_content_bytes = download_file_from_drive(service, saved_index_id)
+                index_data = json.loads(index_content_bytes.getvalue().decode('utf-8'))
+                st.session_state.generated_structure = index_data
+                st.session_state.uploaded_pliegos = document_files
+                go_to_phase2_results(); st.rerun()
+
+    with col2:
+        if st.button("Analizar Archivos y Generar Nuevo Índice", type="primary", use_container_width=True, disabled=not document_files):
+            # Usamos la función que hemos recibido como argumento
+            if handle_full_regeneration(model):
+                go_to_phase2_results(); st.rerun()
+
+    st.write(""); st.markdown("---")
+    # Usamos la función que hemos recibido como argumento
+    st.button("← Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True, key="back_to_projects")
+    
 def phase_2_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration):
     st.markdown("<h3>FASE 2: Revisión de Resultados</h3>", unsafe_allow_html=True)
     st.markdown("Revisa el índice, la guía de redacción y el plan estratégico. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
@@ -901,6 +976,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
