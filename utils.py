@@ -150,23 +150,42 @@ def generar_indice_word(documento, estructura_memoria):
 #           FUNCIONES DE INTERFAZ DE USUARIO (UI)
 # =============================================================================
 
-def mostrar_indice_desplegable(estructura_memoria):
+def mostrar_indice_desplegable(estructura, matices=None):
     """
-    Muestra una estructura de memoria en Streamlit usando expanders.
+    Muestra una estructura de índice en Streamlit con apartados desplegables.
+    AHORA TAMBIÉN MUESTRA LAS INDICACIONES DE CADA SUBAPARTADO.
+
+    Args:
+        estructura (list): La lista de la clave 'estructura_memoria' del JSON.
+        matices (list, optional): La lista de la clave 'matices_desarrollo' del JSON.
     """
-    if not estructura_memoria:
-        st.warning("No se encontró una estructura de memoria para mostrar.")
+    if not estructura:
+        st.warning("La estructura de la memoria está vacía.")
         return
-    st.subheader("Índice Propuesto")
-    for seccion in estructura_memoria:
-        apartado_titulo = seccion.get("apartado", "Apartado sin título")
-        subapartados = seccion.get("subapartados", [])
-        with st.expander(f"**{apartado_titulo}**"):
-            if subapartados:
-                for sub in subapartados:
-                    st.markdown(f"- {sub}")
+
+    # Creamos un diccionario para buscar las indicaciones de forma eficiente
+    if not matices:
+        matices = []
+    matices_dict = {item.get('subapartado'): item.get('indicaciones', 'No se encontraron indicaciones.') for item in matices}
+
+    for seccion in estructura:
+        apartado_principal = seccion.get('apartado', 'Sin Título')
+        with st.expander(f"**{apartado_principal}**"):
+            subapartados = seccion.get('subapartados', [])
+            if not subapartados:
+                st.write("No hay subapartados.")
             else:
-                st.markdown("_Este apartado no tiene subapartados definidos._")
+                for subapartado in subapartados:
+                    # Muestra el título del subapartado
+                    st.markdown(f" L &nbsp; **{subapartado}**")
+                    
+                    # Busca y muestra las indicaciones para este subapartado
+                    indicaciones = matices_dict.get(subapartado)
+                    if indicaciones:
+                        with st.container(border=True):
+                            st.info(indicaciones)
+                    st.write("") # Un pequeño espacio para separar
+
 
 # =============================================================================
 #           FUNCIONES DE CONVERSIÓN HTML A IMAGEN
@@ -213,4 +232,5 @@ def html_a_imagen(html_string, output_filename="temp_image.png"):
     except Exception as e:
         st.error(f"Error al convertir HTML a imagen: {e}")
         return None
+
 
