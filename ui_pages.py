@@ -104,6 +104,8 @@ def project_selection_page(go_to_landing, go_to_phase1):
 
 # ui_pages.py (Pega esta función completa reemplazando la existente)
 
+# ui_pages.py (Pega esta función completa reemplazando la existente)
+
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
@@ -159,46 +161,61 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.header("Extracción de Requisitos Clave")
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
-        with st.spinner("🧠 Analizando pliegos para extraer los requisitos clave..."):
+        with st.spinner("🧠 Leyendo pliegos y extrayendo requisitos..."):
             try:
+                # =========================================================================
+                #           CAMBIO CLAVE: Extraemos el texto ANTES de llamar a la IA
+                # =========================================================================
+                texto_pliegos_combinado = ""
+                for file in document_files:
+                    st.info(f"Procesando archivo: {file['name']}...")
+                    file_content_bytes = download_file_from_drive(service, file['id'])
+                    texto_extraido = ""
+                    try:
+                        if file['name'].lower().endswith('.pdf'):
+                            reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_extraido = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+                        elif file['name'].lower().endswith('.docx'):
+                            doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_extraido = "\n".join(para.text for para in doc.paragraphs)
+                        
+                        texto_pliegos_combinado += f"\n\n--- INICIO DEL DOCUMENTO: {file['name']} ---\n\n{texto_extraido}\n\n--- FIN DEL DOCUMENTO: {file['name']} ---\n\n"
+                    except Exception as ex_file:
+                        st.warning(f"No se pudo procesar el archivo '{file['name']}'. Puede estar escaneado o dañado. Error: {ex_file}")
+
+                if not texto_pliegos_combinado.strip():
+                    st.error("No se pudo extraer texto de ninguno de los documentos. Por favor, asegúrate de que no son PDFs escaneados (imágenes).")
+                    st.stop()
+                
+                # Ahora construimos la llamada a la IA solo con texto
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
-                contenido_ia = [prompt_con_idioma]
                 
-                for file in document_files:
-                    file_content_bytes = download_file_from_drive(service, file['id'])
-                    contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
-            
-                # =========================================================================
-                #           CAMBIO CLAVE: Quitamos la validación automática de JSON
-                # =========================================================================
-                response = model.generate_content(contenido_ia) # <-- YA NO TIENE generation_config
-                # =========================================================================
+                # El contenido ahora es una lista de dos strings: el prompt y el texto de los pliegos
+                contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
                 
-                # Mantenemos la depuración por si acaso
-                st.warning("Respuesta BRUTA recibida de la IA:")
-                st.code(response.text, language='text')
+                # Llamamos a la IA sin validación de JSON
+                response = model.generate_content(contenido_ia)
+                # =========================================================================
                 
                 json_limpio_str = limpiar_respuesta_json(response.text)
-            
-                st.info("Texto después de la limpieza (antes de convertir a JSON):")
-                st.code(json_limpio_str, language='json')
             
                 if json_limpio_str:
                     st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
                     st.toast("✅ ¡Requisitos extraídos con éxito!")
-                    # Limpiamos los mensajes de depuración al tener éxito
                     st.experimental_rerun()
                 else:
-                    st.error("La función de limpieza no pudo extraer un JSON válido de la respuesta de la IA.")
+                    st.error("La IA respondió, pero no se pudo extraer un JSON válido de su respuesta.")
+                    st.warning("Respuesta BRUTA recibida de la IA:")
+                    st.code(response.text, language='text')
             except Exception as e:
-                st.error(f"Ocurrió un error durante la llamada a la IA: {e}")
+                st.error(f"Ocurrió un error crítico durante el proceso: {e}")
 
     # Mostrar los requisitos si ya han sido extraídos
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
+        # (El resto de la función para mostrar los resultados no cambia)
         requisitos = st.session_state.requisitos_extraidos
         st.success("Análisis de viabilidad completado:")
-        
         with st.container(border=True):
             st.subheader("📊 Resumen de la Licitación")
             resumen = requisitos.get('resumen_licitacion', {})
@@ -206,21 +223,18 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
             col1.metric("Presupuesto Base", resumen.get('presupuesto_base', 'N/D'))
             col2.metric("Duración Contrato", resumen.get('duracion_contrato', 'N/D'))
             col3.metric("Admite Lotes", resumen.get('admite_lotes', 'N/D'))
-
             st.markdown("---")
             st.subheader("📋 Requisitos de Solvencia y Certificados")
             solvencia = requisitos.get('requisitos_solvencia_certificados', [])
             if solvencia:
                 for item in solvencia: st.markdown(f"- {item}")
             else: st.markdown("_No se encontraron requisitos específicos de solvencia._")
-
             st.markdown("---")
             st.subheader("⚠️ Condiciones Específicas del Contrato")
             condiciones = requisitos.get('condiciones_especificas', [])
             if condiciones:
                 for item in condiciones: st.markdown(f"- {item}")
             else: st.markdown("_No se encontraron condiciones específicas relevantes._")
-        
         st.markdown("---")
         st.button("Continuar a Generación de Índice (Fase 2) →", on_click=go_to_phase2, use_container_width=True, type="primary")
 
@@ -968,6 +982,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
