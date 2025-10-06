@@ -97,12 +97,124 @@ def project_selection_page(go_to_landing, go_to_phase1):
                     st.success(f"¡Proyecto '{new_project_name}' creado! Ya puedes cargar los documentos.")
                     go_to_phase1(); st.rerun()
 
+# En ui_pages.py, añade esta nueva función
+
+def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
+    if not st.session_state.get('selected_project'):
+        st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
+        go_to_project_selection(); st.rerun()
+
+    project_name = st.session_state.selected_project['name']
+    project_folder_id = st.session_state.selected_project['id']
+    service = st.session_state.drive_service
+
+    st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
+    st.info(f"Estás trabajando en el proyecto: **{project_name}**")
+    
+    # Lógica de gestión de archivos (igual que antes)
+    pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
+    document_files = get_files_in_project(service, pliegos_folder_id)
+    
+    if document_files:
+        st.success("Hemos encontrado estos archivos en la carpeta 'Pliegos' de tu proyecto:")
+        with st.container(border=True):
+            for file in document_files:
+                cols = st.columns([4, 1])
+                cols[0].write(f"📄 **{file['name']}**")
+                if cols[1].button("Eliminar", key=f"del_{file['id']}", type="secondary"):
+                    with st.spinner(f"Eliminando '{file['name']}'..."):
+                        if delete_file_from_drive(service, file['id']):
+                            st.toast(f"Archivo '{file['name']}' eliminado."); st.rerun()
+    else:
+        st.info("La carpeta 'Pliegos' de este proyecto está vacía. Sube los archivos base.")
+
+    with st.expander("Añadir o reemplazar documentación en la carpeta 'Pliegos'", expanded=not document_files):
+        with st.container(border=True):
+            st.subheader("Subir nuevos documentos")
+            new_files_uploader = st.file_uploader("Arrastra aquí los Pliegos para analizar", type=['docx', 'pdf'], accept_multiple_files=True, key="new_files_uploader")
+            if st.button("Guardar nuevos archivos en Drive"):
+                if new_files_uploader:
+                    with st.spinner("Subiendo archivos a la carpeta 'Pliegos'..."):
+                        for file_obj in new_files_uploader:
+                            upload_file_to_drive(service, file_obj, pliegos_folder_id)
+                        st.rerun()
+                else:
+                    st.warning("Por favor, selecciona al menos un archivo para subir.")
+
+    st.markdown("---")
+    st.header("Extracción de Requisitos Clave")
+    
+    if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
+        with st.spinner("🧠 Analizando pliegos para extraer los requisitos clave..."):
+            try:
+                # Elige un idioma por defecto si no está seteado
+                idioma_seleccionado = st.session_state.get('project_language', 'Español')
+                prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
+                contenido_ia = [prompt_con_idioma]
+                
+                for file in document_files:
+                    file_content_bytes = download_file_from_drive(service, file['id'])
+                    contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
+
+                response = model.generate_content(contenido_ia, generation_config={"response_mime_type": "application/json"})
+                json_limpio_str = limpiar_respuesta_json(response.text)
+                
+                if json_limpio_str:
+                    # Guardamos los requisitos en el estado de la sesión
+                    st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
+                    st.toast("✅ ¡Requisitos extraídos con éxito!")
+                else:
+                    st.error("La IA devolvió una respuesta vacía o no válida.")
+            except Exception as e:
+                st.error(f"Ocurrió un error durante la extracción de requisitos: {e}")
+
+    # Mostrar los requisitos si ya han sido extraídos
+    if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
+        requisitos = st.session_state.requisitos_extraidos
+        st.success("Análisis de viabilidad completado:")
+        
+        with st.container(border=True):
+            # Sección de Resumen
+            st.subheader("📊 Resumen de la Licitación")
+            resumen = requisitos.get('resumen_licitacion', {})
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Presupuesto Base", resumen.get('presupuesto_base', 'N/D'))
+            col2.metric("Duración Contrato", resumen.get('duracion_contrato', 'N/D'))
+            col3.metric("Admite Lotes", resumen.get('admite_lotes', 'N/D'))
+
+            # Sección de Solvencia
+            st.markdown("---")
+            st.subheader("📋 Requisitos de Solvencia y Certificados")
+            solvencia = requisitos.get('requisitos_solvencia_certificados', [])
+            if solvencia:
+                for item in solvencia:
+                    st.markdown(f"- {item}")
+            else:
+                st.markdown("_No se encontraron requisitos específicos de solvencia._")
+
+            # Sección de Condiciones
+            st.markdown("---")
+            st.subheader("⚠️ Condiciones Específicas del Contrato")
+            condiciones = requisitos.get('condiciones_especificas', [])
+            if condiciones:
+                for item in condiciones:
+                    st.markdown(f"- {item}")
+            else:
+                st.markdown("_No se encontraron condiciones específicas relevantes._")
+        
+        st.markdown("---")
+        st.button("Continuar a Generación de Índice (Fase 2) →", on_click=go_to_phase2, use_container_width=True, type="primary")
+
+    st.write("")
+    st.markdown("---")
+    st.button("← Volver a Selección de Proyecto", on_click=go_to_project_selection, use_container_width=True)
+    
 # =============================================================================
 #           FASE 1: ANÁLISIS Y ESTRUCTURA
 # =============================================================================
 
 # AHORA ACEPTA LAS FUNCIONES QUE NECESITA
-def phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup):
+def phase_2_structure_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
         go_to_project_selection(); st.rerun()
@@ -177,7 +289,7 @@ def phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_fu
 #           FASE 1: REVISIÓN DE RESULTADOS
 # =============================================================================
 
-def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration):
+def phase_2_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration):
     st.markdown("<h3>FASE 1: Revisión de Resultados</h3>", unsafe_allow_html=True)
     st.markdown("Revisa el índice, la guía de redacción y el plan estratégico. Puedes hacer ajustes con feedback, regenerarlo todo desde cero, o aceptarlo para continuar.")
     st.markdown("---")
@@ -837,6 +949,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
