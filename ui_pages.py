@@ -101,6 +101,8 @@ def project_selection_page(go_to_landing, go_to_phase1):
 # En ui_pages.py, añade esta nueva función
 # En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión final con depuración avanzada:
 
+# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión SIMPLIFICADA y DEFINITIVA:
+
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
@@ -113,6 +115,16 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
+    def limpiar_respuesta_json(texto_sucio):
+        if not isinstance(texto_sucio, str): return ""
+        try:
+            start_index = texto_sucio.find('{')
+            end_index = texto_sucio.rfind('}')
+            if start_index != -1 and end_index != -1 and end_index > start_index:
+                return texto_sucio[start_index:end_index + 1]
+            return ""
+        except Exception: return ""
+
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
     
@@ -146,58 +158,67 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.header("Extracción de Requisitos Clave")
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
-        with st.spinner("🧠 Analizando archivos con la IA..."):
-            response = None # Inicializamos la variable de respuesta
+        with st.spinner("🧠 Extrayendo texto y analizando con la IA..."):
+            response = None
             try:
+                # --- INICIO DEL MÉTODO SIMPLIFICADO ---
+                texto_combinado = ""
+                for file in document_files:
+                    st.info(f"Extrayendo texto de: {file['name']}...")
+                    file_content_bytes = download_file_from_drive(service, file['id'])
+                    try:
+                        if file['name'].lower().endswith('.pdf'):
+                            reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_de_este_fichero = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+                        elif file['name'].lower().endswith('.docx'):
+                            doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_de_este_fichero = "\n".join(para.text for para in doc.paragraphs)
+                        else:
+                            texto_de_este_fichero = ""
+                        
+                        texto_combinado += f"\n\n--- INICIO DOCUMENTO: {file['name']} ---\n{texto_de_este_fichero}\n--- FIN DOCUMENTO ---\n"
+                    except Exception as ex_file:
+                        st.warning(f"No se pudo extraer texto de '{file['name']}'. Error: {ex_file}")
+                
+                if not texto_combinado.strip():
+                    st.error("No se pudo extraer texto de ningún archivo."); st.stop()
+
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
-                contenido_ia = [prompt_con_idioma]
-                texto_extraido_docx = ""
-
-                for file in document_files:
-                    st.info(f"Procesando archivo: {file['name']}...")
-                    file_content_bytes = download_file_from_drive(service, file['id'])
-                    
-                    if file['name'].lower().endswith('.pdf'):
-                        contenido_ia.append({"mime_type": "application/pdf", "data": file_content_bytes.getvalue()})
-                    elif 'wordprocessingml' in file['mimeType']:
-                        doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
-                        texto_extraido_docx += "\n".join(para.text for para in doc.paragraphs)
-
-                if texto_extraido_docx:
-                    contenido_ia.append(texto_extraido_docx)
-
-                generation_config = {"response_mime_type": "application/json"}
-                response = model.generate_content(contenido_ia, generation_config=generation_config)
-
-                # --- INICIO DE LA DEPURACIÓN AVANZADA ---
-                # ANTES de intentar acceder a .text, vamos a inspeccionar la respuesta
-                with st.expander("🔍 Información de Depuración de la API", expanded=True):
-                    st.write("Objeto de respuesta COMPLETO recibido de la IA:")
-                    st.write(response)
-                    if hasattr(response, 'prompt_feedback'):
-                         st.write("Feedback del Prompt (posible bloqueo):")
-                         st.write(response.prompt_feedback)
-                    if not response.candidates:
-                         st.error("¡ALERTA! La respuesta no contiene 'candidates'. La IA no generó contenido.")
-                # --- FIN DE LA DEPURACIÓN AVANZADA ---
-
-                # Ahora intentamos acceder al texto. Si falla aquí, la info de arriba nos dirá por qué.
-                respuesta_texto = response.text
                 
-                st.session_state.requisitos_extraidos = json.loads(respuesta_texto)
-                st.toast("✅ ¡Requisitos extraídos con éxito!")
-                st.rerun()
-            
+                # La llamada a la API ahora es extremadamente simple: un prompt y un bloque de texto.
+                # NO forzamos la salida JSON, dejaremos que la IA responda y luego la limpiaremos.
+                response = model.generate_content([prompt_con_idioma, texto_combinado])
+                # --- FIN DEL MÉTODO SIMPLIFICADO ---
+
+                # La lupa de depuración AHORA SÍ aparecerá porque la llamada anterior es mucho menos propensa a fallar.
+                with st.expander("🔍 Información de Depuración de la API", expanded=True):
+                    st.write(response)
+                
+                if not response.candidates:
+                    st.error("La IA no generó una respuesta. Puede deberse a filtros de seguridad."); st.stop()
+
+                respuesta_texto = response.text
+                json_limpio_str = limpiar_respuesta_json(respuesta_texto)
+
+                if json_limpio_str:
+                    st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
+                    st.toast("✅ ¡Requisitos extraídos con éxito!")
+                    st.rerun()
+                else:
+                    st.error("La IA respondió, pero no se pudo extraer un JSON válido. Revisa la depuración de arriba.")
+                    st.code(respuesta_texto, language='text')
+
             except Exception as e:
                 st.error(f"Ocurrió un error crítico durante el proceso: {e}")
                 st.error(f"Tipo de error: {type(e).__name__}")
-                if response: # Si llegamos a tener una respuesta, la mostramos de nuevo en el error
+                if response:
                     st.warning("El error ocurrió después de recibir esta respuesta de la IA:")
                     st.write(response)
 
-    # El código para mostrar los resultados ya es seguro, lo mantenemos igual
+    # El código para mostrar los resultados ya es seguro
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
+        # ... (el resto del código para mostrar los resultados no necesita cambios)
         requisitos = st.session_state.requisitos_extraidos
         st.success("Análisis de viabilidad completado:")
         with st.container(border=True):
@@ -962,6 +983,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
