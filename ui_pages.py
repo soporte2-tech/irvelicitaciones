@@ -102,6 +102,8 @@ def project_selection_page(go_to_landing, go_to_phase1):
 
 # En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión completa:
 
+# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión "a prueba de balas":
+
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
@@ -114,16 +116,7 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
-    def limpiar_respuesta_json(texto_sucio):
-        if not isinstance(texto_sucio, str): return ""
-        try:
-            start_index = texto_sucio.find('{')
-            end_index = texto_sucio.rfind('}')
-            if start_index != -1 and end_index != -1 and end_index > start_index:
-                return texto_sucio[start_index:end_index + 1]
-            return ""
-        except Exception: return ""
-
+    # ... (El código para mostrar y subir archivos permanece igual) ...
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
     
@@ -157,58 +150,48 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.header("Extracción de Requisitos Clave")
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
-        with st.spinner("🧠 Leyendo pliegos y extrayendo requisitos..."):
+        with st.spinner("🧠 Analizando archivos con la IA... (Este método es más robusto)"):
             try:
-                texto_pliegos_combinado = ""
-                for file in document_files:
-                    st.info(f"Procesando archivo: {file['name']}...")
-                    file_content_bytes = download_file_from_drive(service, file['id'])
-                    texto_extraido = ""
-                    try:
-                        if file['name'].lower().endswith('.pdf'):
-                            reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
-                            texto_extraido = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-                        elif file['name'].lower().endswith('.docx'):
-                            doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
-                            texto_extraido = "\n".join(para.text for para in doc.paragraphs)
-                        texto_pliegos_combinado += f"\n\n--- DOCUMENTO: {file['name']} ---\n{texto_extraido}\n--- FIN DOCUMENTO ---\n"
-                    except Exception as ex_file:
-                        st.warning(f"No se pudo procesar '{file['name']}'. Error: {ex_file}")
-
-                if not texto_pliegos_combinado.strip():
-                    st.error("No se pudo extraer texto de los documentos."); st.stop()
-                
+                # --- INICIO DEL NUEVO MÉTODO MEJORADO ---
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
-                contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
-                response = model.generate_content(contenido_ia)
                 
-                with st.expander("🔍 Ver respuesta BRUTA de la IA (para depuración)"):
-                    st.write("Objeto de respuesta completo:")
-                    st.write(response)
-                    try:
-                        st.write("Texto extraído de la respuesta (`response.text`):")
-                        st.code(response.text, language='text')
-                    except Exception as e_text:
-                        st.error(f"No se pudo acceder a `response.text`. Error: {e_text}")
+                # Preparamos el contenido para la IA: el prompt primero
+                contenido_ia = [prompt_con_idioma]
 
+                # Ahora, añadimos cada archivo directamente
+                for file in document_files:
+                    st.info(f"Enviando archivo a la IA: {file['name']}...")
+                    file_content_bytes = download_file_from_drive(service, file['id'])
+                    # La IA necesita el tipo de archivo (MIME type) y los datos
+                    contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
+
+                # Le pedimos a la IA que SU ÚNICA RESPUESTA sea un JSON
+                generation_config = {"response_mime_type": "application/json"}
+                
+                response = model.generate_content(contenido_ia, generation_config=generation_config)
+                # --- FIN DEL NUEVO MÉTODO MEJORADO ---
+
+                # La respuesta ya debería ser un JSON limpio, pero mantenemos la validación por si acaso
                 if not response.candidates:
                     st.error("La IA no generó una respuesta. Puede deberse a filtros de seguridad."); st.stop()
 
+                # No necesitamos la función limpiar_respuesta_json porque la respuesta ya es JSON
                 respuesta_texto = response.text
-                json_limpio_str = limpiar_respuesta_json(respuesta_texto)
-            
-                if json_limpio_str:
-                    st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
-                    st.toast("✅ ¡Requisitos extraídos con éxito!")
-                    st.rerun()
-                else:
-                    st.error("La IA respondió, pero no se pudo extraer un JSON válido tras la limpieza.")
+                
+                st.session_state.requisitos_extraidos = json.loads(respuesta_texto)
+                st.toast("✅ ¡Requisitos extraídos con éxito!")
+                st.rerun()
             
             except Exception as e:
                 st.error(f"Ocurrió un error crítico durante el proceso: {e}")
                 st.error(f"Tipo de error: {type(e).__name__}")
+                # Si algo falla, es útil ver la respuesta cruda de la IA
+                if 'response' in locals():
+                    with st.expander("🔍 Ver respuesta de la IA para depuración"):
+                        st.write(response)
 
+    # El código para mostrar los resultados ya es seguro, lo mantenemos igual
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
         requisitos = st.session_state.requisitos_extraidos
         st.success("Análisis de viabilidad completado:")
@@ -237,7 +220,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.write("")
     st.markdown("---")
     st.button("← Volver a Selección de Proyecto", on_click=go_to_project_selection, use_container_width=True)
-# =============================================================================
 #           FASE 1: REVISIÓN DE RESULTADOS
 # =============================================================================
 # =============================================================================
@@ -976,6 +958,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
