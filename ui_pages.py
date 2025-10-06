@@ -195,7 +195,9 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
 
         with st.spinner("🧠 Incorporando tu feedback y regenerando la estructura..."):
             try:
-                contenido_ia_regeneracion = [PROMPT_REGENERACION]
+                idioma_seleccionado = st.session_state.get('project_language', 'Español')
+                prompt_con_idioma = PROMPT_REGENERACION.format(idioma=idioma_seleccionado)
+                contenido_ia_regeneracion = [prompt_con_idioma]
                 contenido_ia_regeneracion.append("--- INSTRUCCIONES DEL USUARIO ---\n" + feedback_text)
                 contenido_ia_regeneracion.append("--- ESTRUCTURA JSON ANTERIOR A CORREGIR ---\n" + json.dumps(st.session_state.generated_structure, indent=2))
                 
@@ -295,7 +297,7 @@ def phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regenera
                     st.rerun()
                 except Exception as e:
                     st.error(f"Ocurrió un error durante la sincronización o guardado: {e}")
-
+                    
 def phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3):
     USE_GPT_MODEL = True
     st.markdown("<h3>FASE 2: Centro de Mando de Guiones</h3>", unsafe_allow_html=True)
@@ -384,6 +386,8 @@ def phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3):
                     elif file_info['name'].endswith('.docx'): doc = docx.Document(io.BytesIO(file_content_bytes.getvalue())); texto_extraido = "\n".join(para.text for para in doc.paragraphs)
                 except Exception as e: st.warning(f"No se pudo procesar el archivo '{file_info['name']}': {e}")
                 contexto_para_gpt += f"**Inicio del documento: {file_info['name']}**\n{texto_extraido}\n**Fin del documento: {file_info['name']}**\n\n"
+            idioma_seleccionado = st.session_state.get('project_language', 'Español')
+            prompt_sistema_formateado = PROMPT_GPT_TABLA_PLANIFICACION.format(idioma=idioma_seleccionado)
             response = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role": "system", "content": PROMPT_GPT_TABLA_PLANIFICACION}, {"role": "user", "content": contexto_para_gpt}], temperature=0.2)
             guion_generado = response.choices[0].message.content
             guiones_folder_id = find_or_create_folder(service, "Guiones de Subapartados", parent_id=project_folder_id)
@@ -499,6 +503,8 @@ def phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4):
             pliegos_files_info = get_files_in_project(service, pliegos_folder_id)
             pliegos_content_for_ia = [{"mime_type": f['mimeType'], "data": download_file_from_drive(service, f['id']).getvalue()} for f in pliegos_files_info]
             prompt_final = PROMPT_DESARROLLO.format(apartado_titulo=apartado_titulo, subapartado_titulo=subapartado_titulo, indicaciones=matiz_info.get("indicaciones", ""))
+            idioma_seleccionado = st.session_state.get('project_language', 'Español')
+            prompt_final = PROMPT_DESARROLLO.format(idioma=idioma_seleccionado)
             contenido_ia = [prompt_final] + pliegos_content_for_ia
             if contexto_adicional_str: contenido_ia.append("--- CONTEXTO ADICIONAL DE GUIONES Y DOCUMENTACIÓN DE APOYO ---\n" + contexto_adicional_str)
             generation_config = {"response_mime_type": "application/json"}
@@ -683,6 +689,9 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
                 documento_fase4 = docx.Document(buffer_fase4)
                 texto_completo_original = "\n".join([p.text for p in documento_fase4.paragraphs if p.text.strip()])
                 st.toast("Generando introducción estratégica...")
+                idioma_seleccionado = st.session_state.get('project_language', 'Español')
+                prompt_intro_formateado = PROMPT_GENERAR_INTRODUCCION.format(idioma=idioma_seleccionado)
+                response_intro = model.generate_content([prompt_intro_formateado, texto_completo_original])
                 response_intro = model.generate_content([PROMPT_GENERAR_INTRODUCCION, texto_completo_original])
                 introduccion_markdown = limpiar_respuesta_final(response_intro.text)
                 st.toast("Creando documento final...")
@@ -710,6 +719,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
