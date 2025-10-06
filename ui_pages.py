@@ -114,6 +114,28 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
+    # =============================================================================
+    #           FUNCIÓN DE LIMPIEZA LOCAL (SOLUCIÓN DEFINITIVA)
+    # =============================================================================
+    def limpiar_respuesta_json(texto_sucio):
+        """
+        Limpia de forma muy agresiva la respuesta de texto de la IA para extraer un objeto JSON válido.
+        Busca el primer '{' y el último '}' en la cadena, ignorando todo lo demás.
+        """
+        if not isinstance(texto_sucio, str):
+            return ""
+        try:
+            start_index = texto_sucio.find('{')
+            end_index = texto_sucio.rfind('}')
+            if start_index != -1 and end_index != -1 and end_index > start_index:
+                json_str = texto_sucio[start_index:end_index + 1]
+                return json_str
+            else:
+                return ""
+        except Exception:
+            return ""
+    # =============================================================================
+
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
     
@@ -148,7 +170,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
         with st.spinner("🧠 Analizando pliegos para extraer los requisitos clave..."):
-            # --- NUEVO BLOQUE CON DEPURACIÓN ---
             try:
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
@@ -160,17 +181,14 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
             
                 response = model.generate_content(contenido_ia, generation_config={"response_mime_type": "application/json"})
                 
-                # --- LÍNEAS DE DEPURACIÓN AÑADIDAS ---
                 st.warning("Respuesta BRUTA recibida de la IA:")
                 st.code(response.text, language='text')
-                # ------------------------------------
                 
+                # AHORA LLAMA A LA FUNCIÓN LOCAL DEFINIDA ARRIBA
                 json_limpio_str = limpiar_respuesta_json(response.text)
             
-                # --- LÍNEAS DE DEPURACIÓN AÑADIDAS ---
                 st.info("Texto después de la limpieza (antes de convertir a JSON):")
                 st.code(json_limpio_str, language='json')
-                # ------------------------------------
             
                 if json_limpio_str:
                     st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
@@ -958,6 +976,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
