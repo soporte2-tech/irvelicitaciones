@@ -116,7 +116,7 @@ def phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_fu
     
     st.selectbox(
         "Selecciona el idioma para la redacción de la memoria:",
-        ('Español', 'Inglés', 'Catalán', 'Gallego', 'Francés'), # Puedes añadir o quitar idiomas
+        ('Español', 'Inglés', 'Catalán', 'Gallego', 'Francés', 'Euskera'), # Puedes añadir o quitar idiomas
         key='project_language' # Guardamos la elección en el estado de la sesión
     )
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
@@ -710,6 +710,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
