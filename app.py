@@ -130,7 +130,7 @@ else:
         # Es buena práctica configurar esto también solo si no está ya hecho
         if 'gemini_model' not in st.session_state:
             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            st.session_state.gemini_model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
+            st.session_state.gemini_model = genai.GenerativeModel('models/gemini-2.5-flash')
 
         model = st.session_state.gemini_model
 
@@ -170,4 +170,5 @@ else:
     else:
         st.error(f"Página '{page}' no reconocida. Volviendo a la selección de proyecto.")
         go_to_project_selection()
+
 
