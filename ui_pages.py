@@ -4,6 +4,7 @@ import streamlit as st
 import json
 import openai
 from openai import OpenAI
+import google.generativeai as genai
 import io
 import re
 import os
@@ -666,6 +667,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
