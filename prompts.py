@@ -268,11 +268,11 @@ Genera únicamente el objeto JSON corregido. No incluyas ningún texto fuera de 
 """
 
 PROMPT_DESARROLLO = """
-**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. ALL TEXT WITHIN THE JSON MUST BE IN SPANISH (castellano). YOU ARE A CONTENT ARCHITECT, NOT A CONSULTANT. YOUR JOB IS TO DECONSTRUCT, NOT TO ANALYZE OR EVALUATE.**
+**SYSTEM DIRECTIVE: YOUR ENTIRE RESPONSE MUST BE A SINGLE, VALID JSON OBJECT. ALL TEXT WITHIN THE JSON MUST BE IN THIS LANGUAGE : **idioma: {idioma}**. YOU ARE A CONTENT ARCHITECT, NOT A CONSULTANT. YOUR JOB IS TO DECONSTRUCT, NOT TO ANALYZE OR EVALUATE.**
 
 **TASK:**
 You are a silent content architect. You will receive a content draft ("Guion"). Your ONLY task is to break down this draft into a structured JSON plan. This plan will be executed by another AI to write the final text.
- Write the content in this language  **idioma: {idioma}**.
+
 **CRITICAL RULES:**
 1.  **CRITICAL EXCLUSION WARNING:** It is strictly forbidden to mention, imply, or include any data related to economic or formula-based criteria (price, economic offers, discounts, delivery time reductions, warranty extensions, etc.). The technical proposal must only contain information related to value judgments. Any mention of formula-based criteria is grounds for direct exclusion from the tender. Focus solely on developing the requested technical and quality aspects.
 2.  **NO ANALYSIS:** Do not evaluate the quality of the "Guion". Do not suggest improvements. Simply convert its structure and content into a JSON plan.
@@ -282,10 +282,10 @@ You are a silent content architect. You will receive a content draft ("Guion"). 
 4.  **PROMPT TEMPLATES (USE LITERALLY):** You MUST use the following templates for the `prompt_para_asistente` key.
 
     *   **TEMPLATE FOR TEXT (MARKDOWN):**
-        `"Actúa como un redactor técnico experto y silencioso. Tu única tarea es escribir el contenido solicitado en español castellano. REGLAS ABSOLUTAS: 1. Tu respuesta debe ser ÚNICAMENTE el texto final en formato Markdown. 2. NO ofrezcas opciones ni alternativas. 3. NO expliques los cambios que haces. 4. Empieza directamente con el primer párrafo. AHORA, GENERA EL SIGUIENTE CONTENIDO: [Here you insert the DETAILED description from the 'Guion', for example: 'Un párrafo que explique la metodología Agile-Scrum...']"`
+        `"Actúa como un redactor técnico experto y silencioso. Tu única tarea es escribir el contenido solicitado en el idioma: {idioma}. REGLAS ABSOLUTAS: 1. Tu respuesta debe ser ÚNICAMENTE el texto final en formato Markdown. 2. NO ofrezcas opciones ni alternativas. 3. NO expliques los cambios que haces. 4. Empieza directamente con el primer párrafo. AHORA, GENERA EL SIGUIENTE CONTENIDO: [Here you insert the DETAILED description from the 'Guion', for example: 'Un párrafo que explique la metodología Agile-Scrum...']"`
 
     *   **TEMPLATE FOR VISUAL (HTML):**
-        `"Actúa como un desarrollador front-end silencioso. Tu única tarea es generar el código HTML solicitado en español castellano. REGLAS ABSOLUTAS: 1. Tu respuesta debe ser ÚNICAMENTE el código HTML completo, empezando con <!DOCTYPE html>. 2. NO incluyas explicaciones, comentarios de código o las etiquetas ```html. AHORA, GENERA EL SIGUIENTE ELEMENTO VISUAL: [Here you insert the description of the visual element from the 'Guion', for example: 'Un diagrama de 3 fases con los títulos X, Y, Z y sus descripciones...']"`
+        `"Actúa como un desarrollador front-end silencioso. Tu única tarea es generar el código HTML solicitado en el idioma: {idioma}. REGLAS ABSOLUTAS: 1. Tu respuesta debe ser ÚNICAMENTE el código HTML completo, empezando con <!DOCTYPE html>. 2. NO incluyas explicaciones, comentarios de código o las etiquetas ```html. AHORA, GENERA EL SIGUIENTE ELEMENTO VISUAL: [Here you insert the description of the visual element from the 'Guion', for example: 'Un diagrama de 3 fases con los títulos X, Y, Z y sus descripciones...']"`
 
 **FINAL JSON OUTPUT STRUCTURE (STRICT):**
 Your response must be a single, valid JSON object containing a list of prompts.
@@ -373,6 +373,7 @@ Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 **[ACCIÓN]**
 Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
 """
+
 
 
 
