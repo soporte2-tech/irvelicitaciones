@@ -343,36 +343,71 @@ Genera únicamente el texto completo y mejorado en formato Markdown.
 
 PROMPT_GPT_TABLA_PLANIFICACION = """
 **[ROL Y OBJETIVO ABSOLUTAMENTE CRÍTICO]**
-Tu ÚNICA función es actuar como un **ANALISTA DE REQUISITOS**. NO eres un escritor, NO eres un consultor, NO eres un redactor. Eres un analista que extrae información y la organiza en una tabla.
+Tu ÚNICA función es actuar como un **ANALISTA DE REQUISITOS EXPERTO**. Tu misión es crear un **guion de planificación** claro, visual y directo en formato Markdown. NO eres un escritor, NO eres un consultor. Eres un analista que desglosa la información para que un redactor técnico pueda ejecutarla.
 Escribe el contenido solicitado en **idioma: {idioma}**.
+
 **[TAREA ÚNICA Y EXCLUSIVA]**
-Analiza el contexto proporcionado por el usuario y completa la siguiente **TABLA DE PLANIFICACIÓN EN MARKDOWN**.
-Tu respuesta debe ser **ÚNICA Y EXCLUSIVAMENTE LA TABLA**. No incluyas ningún texto antes o después de la tabla. No escribas introducciones ni conclusiones. SOLO LA TABLA.
+Analiza el contexto proporcionado (pliegos, indicaciones y documentación de apoyo) y genera un documento en **FORMATO MARKDOWN** usando encabezados, negritas y listas.
+Tu respuesta debe ser **ÚNICA Y EXCLUSIVAMENTE el texto en formato Markdown**, siguiendo la estructura que te proporciono. **NO uses tablas**. NO incluyas ningún texto introductorio, explicaciones, ni conclusiones. Empieza directamente con el primer encabezado.
+
 **ADVERTENCIA DE EXCLUSIÓN CRÍTICA:**
 Está terminantemente prohibido mencionar, insinuar o incluir cualquier dato relacionado con criterios económicos o evaluables por fórmula (precio, ofertas económicas, descuentos, reducción de plazos de entrega, ampliación de plazos de garantía, etc.). La memoria técnica solo debe contener información sobre juicios de valor. Cualquier mención a los criterios de fórmula es motivo de exclusión directa de la licitación. Céntrate únicamente en desarrollar los aspectos técnicos y de calidad solicitados.
-**[FORMATO DE SALIDA ESTRICTO E INNEGOCIABLE: TABLA MARKDOWN]**
-Debes rellenar la siguiente estructura de tabla. No te desvíes de este formato.
 
-| Criterio de Planificación      | Extracción y Desglose de Contenido                                                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Requisitos del Pliego**   | (Aquí, lista **telegráficamente** con viñetas `-` los requisitos numéricos, legales u obligatorios extraídos DIRECTAMENTE del pliego. Sé breve. Ej: `- Mínimo 100m²`)  |
-| **2. Propuesta de Solución**   | (Aquí, lista con viñetas `-` las soluciones, tecnologías o métodos propuestos para cumplir los requisitos. Ej: `- Usar sistema de reservas Skedda`)                   |
-| **3. Preguntas para el Experto** | (Aquí, formula de 1 a 3 preguntas **cruciales** que un experto humano debería responder para añadir valor. Ej: `- ¿Cuál es nuestro diferenciador clave en formación?`)  |
-| **4. Palabras Clave**         | (Aquí, enumera de 5 a 10 palabras o conceptos clave que deben aparecer en la redacción final. Ej: `sostenibilidad, innovación, coworking, seguridad, eficiencia`)     |
+**[LÓGICA DE DECISIÓN CLAVE]**
+1.  **Propuesta Mínima:** Siempre debes rellenar esta sección basándote en el cumplimiento estricto de los requisitos del pliego.
+2.  **Propuesta de Mejora:** Si el usuario ha proporcionado "DOCUMENTACIÓN DE APOYO ADICIONAL", úsala como base para proponer mejoras que aporten valor añadido. **Si no hay documentación de apoyo**, indica explícitamente en esta sección: 'Se propone cumplir estrictamente con el mínimo requerido al no disponer de información adicional para proponer mejoras.'
 
-**[EJEMPLO DE UNA RESPUESTA PERFECTA Y CONCISA]**
+**[FORMATO DE SALIDA ESTRICTO Y VISUAL (MARKDOWN)]**
+Usa la siguiente estructura, con sus emojis, negritas y formato exacto:
 
-| Criterio de Planificación      | Extracción y Desglose de Contenido                                                                                                                              |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **1. Requisitos del Pliego**   | - Mínimo 100m² distribuidos.<br>- Rotulación según manual de identidad de la Xunta.<br>- Horario mínimo de 9h-18h L-J y 8h-15h V.                                     |
-| **2. Propuesta de Solución**   | - Oficina de 120m² con diseño abierto.<br>- Rótulo exterior luminoso con LED de bajo consumo.<br>- Propuesta de horario estival de 8h-15h L-V.                         |
-| **3. Preguntas para el Experto** | - ¿Qué software específico de CRM, además de Calendly, podemos integrar para demostrar innovación?<br>- ¿Tenemos algún caso de éxito medible en gestión de espacios similar? |
-| **4. Palabras Clave**         | `optimización de espacios, imagen corporativa, eficiencia energética, control de acceso, gestión de incidencias, propuesta de valor, networking, emprendimiento`     |
+### 📋 **Requisitos del Pliego (Análisis Directo)**
+- (Lista con viñetas los requisitos **numéricos, legales u obligatorios** extraídos DIRECTAMENTE del pliego. Usa **negrita** para los datos clave).
+
+### 💡 **Propuesta de Solución Mínima (Cumplimiento Estricto)**
+(Aquí, describe en un párrafo la solución que cumple **estrictamente** con los requisitos. Es la propuesta base si no hubiera información adicional del cliente.)
+
+### ✨ **Propuesta de Mejora (Valor Añadido y Diferenciación)**
+(Aquí, describe la solución **mejorada** que supera el mínimo. Empieza con un párrafo introductorio y luego detalla las mejoras específicas en una lista con viñetas. Si no hay información para una mejora, escribe: 'Se propone cumplir estrictamente con el mínimo requerido al no disponer de información adicional para proponer mejoras.')
+
+### ❓ **Preguntas Clave para el Experto**
+- (Formula de 1 a 3 preguntas **cruciales** y específicas que un experto humano debería responder para enriquecer la **propuesta de mejora**).
+
+### 🔑 **Palabras Clave Estratégicas**
+(Enumera de 5 a 10 palabras o conceptos clave que deben aparecer en la redacción final, incluyendo términos de la mejora, separados por comas).
+
+
+**[EJEMPLO DE UNA RESPUESTA PERFECTA]**
+
+### 📋 **Requisitos del Pliego (Análisis Directo)**
+- Mínimo **100m²** distribuidos.
+- Rotulación según **manual de identidad** de la Xunta.
+- Horario mínimo de **9h-18h L-J** y **8h-15h V**.
+
+### 💡 **Propuesta de Solución Mínima (Cumplimiento Estricto)**
+Se habilitará una oficina de **105m²** para cumplir rigurosamente con el requisito de espacio. La instalación del rótulo seguirá estrictamente la normativa del manual de identidad visual proporcionado, y el horario de apertura será el mínimo exigido por el pliego, garantizando el cumplimiento básico de las condiciones.
+
+### ✨ **Propuesta de Mejora (Valor Añadido y Diferenciación)**
+Para superar las expectativas, se propone una oficina de **120m²** con un diseño de **espacio abierto** que fomenta el coworking y la colaboración, incluyendo una **sala de reuniones multifuncional** y tecnológicamente equipada. Adicionalmente, se implementarán las siguientes mejoras:
+- **Rótulo de bajo consumo:** Se instalará un rótulo con tecnología LED de alta visibilidad nocturna para reforzar la imagen corporativa y la sostenibilidad.
+- **Horario flexible en verano:** Se ofrecerá un horario de 8h a 15h de Lunes a Viernes durante los meses de julio y agosto para facilitar la conciliación familiar del personal.
+- **Software de gestión de espacios:** Se implementará la herramienta *Skedda* para la reserva de puestos y salas, demostrando innovación en la gestión.
+
+### ❓ **Preguntas Clave para el Experto**
+- ¿Qué software específico de CRM, además de *Calendly*, podemos integrar para demostrar innovación en la gestión del espacio mejorado?
+- ¿Tenemos algún caso de éxito medible en gestión de espacios similar para incluir como referencia y reforzar la mejora?
+
+### 🔑 **Palabras Clave Estratégicas**
+`optimización de espacios`, `imagen corporativa`, `eficiencia energética`, `valor añadido`, `sala multifuncional`, `conciliación`, `innovación`, `networking`, `emprendimiento`
 
 
 **[ACCIÓN]**
-Ahora, procede a crear la **TABLA DE PLANIFICACIÓN** para el subapartado proporcionado. Recuerda: solo la tabla.
+Ahora, procede a crear el **guion de planificación** para el subapartado proporcionado. Recuerda: solo el texto en Markdown, siguiendo la estructura visual y aplicando la lógica de decisión para la mejora.
 """
+
+# =================================================================================
+#           FIN DE LA MODIFICACIÓN: PROMPT_GPT_TABLA_PLANIFICACION ACTUALIZADO
+# =================================================================================
+
 
 
 
