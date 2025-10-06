@@ -502,7 +502,6 @@ def phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4):
             pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
             pliegos_files_info = get_files_in_project(service, pliegos_folder_id)
             pliegos_content_for_ia = [{"mime_type": f['mimeType'], "data": download_file_from_drive(service, f['id']).getvalue()} for f in pliegos_files_info]
-            prompt_final = PROMPT_DESARROLLO.format(apartado_titulo=apartado_titulo, subapartado_titulo=subapartado_titulo, indicaciones=matiz_info.get("indicaciones", ""))
             idioma_seleccionado = st.session_state.get('project_language', 'Español')
             prompt_final = PROMPT_DESARROLLO.format(idioma=idioma_seleccionado)
             contenido_ia = [prompt_final] + pliegos_content_for_ia
@@ -692,7 +691,6 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_intro_formateado = PROMPT_GENERAR_INTRODUCCION.format(idioma=idioma_seleccionado)
                 response_intro = model.generate_content([prompt_intro_formateado, texto_completo_original])
-                response_intro = model.generate_content([PROMPT_GENERAR_INTRODUCCION, texto_completo_original])
                 introduccion_markdown = limpiar_respuesta_final(response_intro.text)
                 st.toast("Creando documento final...")
                 documento_final = docx.Document()
@@ -719,6 +717,7 @@ def phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_an
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 4", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
