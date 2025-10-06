@@ -125,29 +125,31 @@ else:
             st.session_state.drive_service = build_drive_service(credentials)
 
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('models/gemini-1.5-pro-latest') # O el modelo que uses
     except Exception as e:
         st.error(f"Error en la configuración de servicios. Detalle: {e}")
         st.stop()
         
-    # 4. Router: Llama a la función de la página actual según el estado.
+    # 4. Router: Llama a la función de la página actual según el estado,
+    #    PASANDO las funciones necesarias como argumentos.
     page = st.session_state.page
     
-    if page in ['landing', 'project_selection']:
-        project_selection_page()
+    if page == 'landing':
+        landing_page() # landing_page no necesita nada
+    elif page == 'project_selection':
+        project_selection_page(go_to_landing, go_to_phase1)
     elif page == 'phase_1':
-        phase_1_page(model)
+        phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup)
     elif page == 'phase_1_results':
-        phase_1_results_page(model)
+        phase_1_results_page(model, go_to_phase1, go_to_phase2, handle_full_regeneration)
     elif page == 'phase_2':
-        phase_2_page(model)
+        phase_2_page(model, go_to_phase1, go_to_phase1_results, go_to_phase3)
     elif page == 'phase_3':
-        phase_3_page(model)
+        phase_3_page(model, go_to_phase1, go_to_phase2, go_to_phase4)
     elif page == 'phase_4':
-        phase_4_page(model)
+        phase_4_page(model, go_to_phase3, go_to_phase5)
     elif page == 'phase_5':
-        phase_5_page(model)
+        phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_and_cleanup)
     else:
         st.error("Página no reconocida. Volviendo a la selección de proyecto.")
-
-        project_selection_page()
+        project_selection_page(go_to_landing, go_to_phase1)
