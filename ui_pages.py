@@ -14,7 +14,7 @@ from prompts import PROMPT_GPT_TABLA_PLANIFICACION
 from drive_utils import (
     find_or_create_folder, get_files_in_project, delete_file_from_drive,
     upload_file_to_drive, find_file_by_name, download_file_from_drive,
-    sync_guiones_folders_with_index, list_project_folders, ROOT_FOLDER_NAME
+    sync_guiones_folders_with_index, list_ect_folders, ROOT_FOLDER_NAME
 )
 from utils import (
     mostrar_indice_desplegable, limpiar_respuesta_json, agregar_markdown_a_word,
@@ -79,7 +79,11 @@ def project_selection_page():
             st.info("Aún no tienes proyectos. Crea uno nuevo en el paso 2.")
         else:
             project_names = ["-- Selecciona un proyecto --"] + list(projects.keys())
-            selected_name = st.selectbox("Selecciona tu proyecto:", project_names)
+            selected_name = st.selectbox(
+                "Selecciona tu proyecto:",
+                project_names, 
+                key="project_selector"  # <--- AÑADE ESTA LÍNEA
+            )
             
             if st.button("Cargar Proyecto Seleccionado", type="primary"):
                 if selected_name != "-- Selecciona un proyecto --":
@@ -970,6 +974,7 @@ def phase_5_page(model):
     with col_nav2:
 
         st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
