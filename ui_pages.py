@@ -102,6 +102,8 @@ def project_selection_page(go_to_landing, go_to_phase1):
 
 # ui_pages.py (Pega esta función completa reemplazando la existente)
 
+# ui_pages.py (Pega esta función completa reemplazando la existente)
+
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
         st.warning("No se ha seleccionado ningún proyecto. Volviendo a la selección.")
@@ -114,27 +116,15 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
-    # =============================================================================
-    #           FUNCIÓN DE LIMPIEZA LOCAL (SOLUCIÓN DEFINITIVA)
-    # =============================================================================
     def limpiar_respuesta_json(texto_sucio):
-        """
-        Limpia de forma muy agresiva la respuesta de texto de la IA para extraer un objeto JSON válido.
-        Busca el primer '{' y el último '}' en la cadena, ignorando todo lo demás.
-        """
-        if not isinstance(texto_sucio, str):
-            return ""
+        if not isinstance(texto_sucio, str): return ""
         try:
             start_index = texto_sucio.find('{')
             end_index = texto_sucio.rfind('}')
             if start_index != -1 and end_index != -1 and end_index > start_index:
-                json_str = texto_sucio[start_index:end_index + 1]
-                return json_str
-            else:
-                return ""
-        except Exception:
+                return texto_sucio[start_index:end_index + 1]
             return ""
-    # =============================================================================
+        except Exception: return ""
 
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
@@ -179,12 +169,16 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                     file_content_bytes = download_file_from_drive(service, file['id'])
                     contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
             
-                response = model.generate_content(contenido_ia, generation_config={"response_mime_type": "application/json"})
+                # =========================================================================
+                #           CAMBIO CLAVE: Quitamos la validación automática de JSON
+                # =========================================================================
+                response = model.generate_content(contenido_ia) # <-- YA NO TIENE generation_config
+                # =========================================================================
                 
+                # Mantenemos la depuración por si acaso
                 st.warning("Respuesta BRUTA recibida de la IA:")
                 st.code(response.text, language='text')
                 
-                # AHORA LLAMA A LA FUNCIÓN LOCAL DEFINIDA ARRIBA
                 json_limpio_str = limpiar_respuesta_json(response.text)
             
                 st.info("Texto después de la limpieza (antes de convertir a JSON):")
@@ -193,10 +187,12 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
                 if json_limpio_str:
                     st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
                     st.toast("✅ ¡Requisitos extraídos con éxito!")
+                    # Limpiamos los mensajes de depuración al tener éxito
+                    st.experimental_rerun()
                 else:
-                    st.error("La función de limpieza no pudo extraer un JSON válido.")
+                    st.error("La función de limpieza no pudo extraer un JSON válido de la respuesta de la IA.")
             except Exception as e:
-                st.error(f"Ocurrió un error durante la extracción de requisitos: {e}")
+                st.error(f"Ocurrió un error durante la llamada a la IA: {e}")
 
     # Mostrar los requisitos si ya han sido extraídos
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
@@ -215,19 +211,15 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
             st.subheader("📋 Requisitos de Solvencia y Certificados")
             solvencia = requisitos.get('requisitos_solvencia_certificados', [])
             if solvencia:
-                for item in solvencia:
-                    st.markdown(f"- {item}")
-            else:
-                st.markdown("_No se encontraron requisitos específicos de solvencia._")
+                for item in solvencia: st.markdown(f"- {item}")
+            else: st.markdown("_No se encontraron requisitos específicos de solvencia._")
 
             st.markdown("---")
             st.subheader("⚠️ Condiciones Específicas del Contrato")
             condiciones = requisitos.get('condiciones_especificas', [])
             if condiciones:
-                for item in condiciones:
-                    st.markdown(f"- {item}")
-            else:
-                st.markdown("_No se encontraron condiciones específicas relevantes._")
+                for item in condiciones: st.markdown(f"- {item}")
+            else: st.markdown("_No se encontraron condiciones específicas relevantes._")
         
         st.markdown("---")
         st.button("Continuar a Generación de Índice (Fase 2) →", on_click=go_to_phase2, use_container_width=True, type="primary")
@@ -976,6 +968,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
