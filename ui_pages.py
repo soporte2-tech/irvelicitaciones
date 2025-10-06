@@ -104,7 +104,7 @@ def project_selection_page(go_to_landing, go_to_phase1):
 
 # ui_pages.py (Pega esta función completa reemplazando la existente)
 
-# ui_pages.py (Pega esta función completa reemplazando la existente)
+# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta:
 
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
@@ -162,58 +162,74 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
         with st.spinner("🧠 Leyendo pliegos y extrayendo requisitos..."):
-            try:
-                # =========================================================================
-                #           CAMBIO CLAVE: Extraemos el texto ANTES de llamar a la IA
-                # =========================================================================
-                texto_pliegos_combinado = ""
-                for file in document_files:
-                    st.info(f"Procesando archivo: {file['name']}...")
-                    file_content_bytes = download_file_from_drive(service, file['id'])
-                    texto_extraido = ""
-                    try:
-                        if file['name'].lower().endswith('.pdf'):
-                            reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
-                            texto_extraido = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-                        elif file['name'].lower().endswith('.docx'):
-                            doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
-                            texto_extraido = "\n".join(para.text for para in doc.paragraphs)
-                        
-                        texto_pliegos_combinado += f"\n\n--- INICIO DEL DOCUMENTO: {file['name']} ---\n\n{texto_extraido}\n\n--- FIN DEL DOCUMENTO: {file['name']} ---\n\n"
-                    except Exception as ex_file:
-                        st.warning(f"No se pudo procesar el archivo '{file['name']}'. Puede estar escaneado o dañado. Error: {ex_file}")
+            texto_pliegos_combinado = ""
+            for file in document_files:
+                st.info(f"Procesando archivo: {file['name']}...")
+                file_content_bytes = download_file_from_drive(service, file['id'])
+                texto_extraido = ""
+                try:
+                    if file['name'].lower().endswith('.pdf'):
+                        reader = PdfReader(io.BytesIO(file_content_bytes.getvalue()))
+                        texto_extraido = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+                    elif file['name'].lower().endswith('.docx'):
+                        doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
+                        texto_extraido = "\n".join(para.text for para in doc.paragraphs)
+                    
+                    texto_pliegos_combinado += f"\n\n--- INICIO DEL DOCUMENTO: {file['name']} ---\n\n{texto_extraido}\n\n--- FIN DEL DOCUMENTO: {file['name']} ---\n\n"
+                except Exception as ex_file:
+                    st.warning(f"No se pudo procesar el archivo '{file['name']}'. Puede estar escaneado o dañado. Error: {ex_file}")
 
-                if not texto_pliegos_combinado.strip():
-                    st.error("No se pudo extraer texto de ninguno de los documentos. Por favor, asegúrate de que no son PDFs escaneados (imágenes).")
-                    st.stop()
-                
-                # Ahora construimos la llamada a la IA solo con texto
+            if not texto_pliegos_combinado.strip():
+                st.error("No se pudo extraer texto de ninguno de los documentos. Por favor, asegúrate de que no son PDFs escaneados (imágenes).")
+                st.stop()
+            
+            # Usamos un bloque try/except más robusto para la llamada a la IA
+            try:
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
-                
-                # El contenido ahora es una lista de dos strings: el prompt y el texto de los pliegos
                 contenido_ia = [prompt_con_idioma, texto_pliegos_combinado]
                 
-                # Llamamos a la IA sin validación de JSON
                 response = model.generate_content(contenido_ia)
-                # =========================================================================
                 
-                json_limpio_str = limpiar_respuesta_json(response.text)
+                # --- INICIO DE LA CORRECCIÓN ---
+                # 1. Verificar si la respuesta de la IA tiene candidatos válidos
+                if not response.candidates:
+                    st.error("La IA no generó una respuesta. Esto puede deberse a los filtros de seguridad.")
+                    # 2. Mostrar información detallada sobre por qué fue bloqueada
+                    try:
+                        feedback = response.prompt_feedback
+                        st.warning(f"Razón del bloqueo: {feedback.block_reason}")
+                        st.json([rating.__dict__ for rating in feedback.safety_ratings])
+                    except Exception:
+                        st.warning("No se pudo obtener información detallada del bloqueo.")
+                    st.stop() # Detenemos la ejecución para evitar más errores
+
+                # 3. Si la validación pasa, accedemos al texto de forma segura
+                respuesta_texto = response.text
+                # --- FIN DE LA CORRECCIÓN ---
+
+                json_limpio_str = limpiar_respuesta_json(respuesta_texto)
             
                 if json_limpio_str:
                     st.session_state.requisitos_extraidos = json.loads(json_limpio_str)
                     st.toast("✅ ¡Requisitos extraídos con éxito!")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("La IA respondió, pero no se pudo extraer un JSON válido de su respuesta.")
                     st.warning("Respuesta BRUTA recibida de la IA:")
-                    st.code(response.text, language='text')
+                    st.code(respuesta_texto, language='text')
+            
+            except json.JSONDecodeError as e:
+                 st.error(f"Error al procesar el JSON de la IA: {e}")
+                 st.warning("La IA devolvió un formato que no es JSON válido. Respuesta recibida:")
+                 st.code(respuesta_texto, language='text')
             except Exception as e:
                 st.error(f"Ocurrió un error crítico durante el proceso: {e}")
+                st.error(f"Tipo de error: {type(e).__name__}")
 
-    # Mostrar los requisitos si ya han sido extraídos
+
+    # (El resto de la función para mostrar los resultados no cambia y permanece igual)
     if 'requisitos_extraidos' in st.session_state and st.session_state.requisitos_extraidos:
-        # (El resto de la función para mostrar los resultados no cambia)
         requisitos = st.session_state.requisitos_extraidos
         st.success("Análisis de viabilidad completado:")
         with st.container(border=True):
@@ -982,6 +998,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
