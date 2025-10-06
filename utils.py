@@ -1,13 +1,11 @@
-# utils.py
+# utils.py (VERSIÓN COMPLETA Y CORREGIDA)
 
-# =============================================================================
-#           IMPORTACIONES (AQUÍ ESTÁ LA CLAVE)
-# =============================================================================
-import re  # <--- ¡ESTA ES LA LÍNEA MÁS IMPORTANTE! Asegúrate de que está al principio.
+import streamlit as st
+import re
 import os
 import io
+import json
 import docx
-import streamlit as st
 import imgkit
 from pypdf import PdfReader
 
@@ -17,21 +15,29 @@ from pypdf import PdfReader
 
 def limpiar_respuesta_json(texto_sucio):
     """
-    Busca y extrae un bloque de código JSON de una cadena de texto más grande.
-    Primero busca un bloque ```json ... ```, y si no lo encuentra, busca cualquier
-    objeto que empiece con { y termine con }.
+    Limpia de forma robusta la respuesta de texto de la IA para extraer un objeto JSON válido.
+    Elimina los marcadores de código, espacios en blanco y cualquier texto antes o después del JSON.
     """
     if not isinstance(texto_sucio, str):
         return ""
-    # Búsqueda prioritaria: bloque de código JSON explícito
-    match_bloque = re.search(r'```(?:json)?\s*(\{.*\})\s*```', texto_sucio, re.DOTALL)
-    if match_bloque:
-        return match_bloque.group(1).strip()
-    # Búsqueda secundaria: cualquier objeto JSON en el texto
-    match_objeto = re.search(r'\{.*\}', texto_sucio, re.DOTALL)
+
+    # 1. Eliminar espacios en blanco, saltos de línea, etc., al principio y al final.
+    texto_limpio = texto_sucio.strip()
+
+    # 2. Eliminar los ```json y ``` que a veces añade el modelo.
+    texto_limpio = re.sub(r'^```(?:json)?\s*', '', texto_limpio, flags=re.IGNORECASE)
+    texto_limpio = re.sub(r'```$', '', texto_limpio)
+
+    # 3. Volver a limpiar por si acaso quedaran espacios después de quitar los ```
+    texto_limpio = texto_limpio.strip()
+
+    # 4. Búsqueda prioritaria: cualquier objeto JSON en el texto
+    match_objeto = re.search(r'\{.*\}', texto_limpio, re.DOTALL)
     if match_objeto:
         return match_objeto.group(0).strip()
-    return ""
+        
+    return "" # Devuelve una cadena vacía si no se puede encontrar un JSON válido
+
 
 def limpiar_respuesta_final(texto_ia):
     """
@@ -102,6 +108,7 @@ def agregar_markdown_a_word(documento, texto_markdown):
     patron_encabezado = re.compile(r'^(#+)\s+(.*)')
     patron_lista_numerada = re.compile(r'^\s*\d+\.\s+')
     patron_lista_viñeta = re.compile(r'^\s*[\*\-]\s+')
+    
     def procesar_linea_con_negritas(parrafo, texto):
         partes = re.split(r'(\*\*.*?\*\*)', texto)
         for parte in partes:
@@ -109,14 +116,17 @@ def agregar_markdown_a_word(documento, texto_markdown):
                 parrafo.add_run(parte[2:-2]).bold = True
             elif parte:
                 parrafo.add_run(parte)
+
     for linea in texto_markdown.split('\n'):
         linea_limpia = linea.strip()
         if not linea_limpia: continue
+        
         match_encabezado = patron_encabezado.match(linea_limpia)
         if match_encabezado:
             nivel = min(len(match_encabezado.group(1)), 4)
             documento.add_heading(match_encabezado.group(2).strip(), level=nivel)
             continue
+
         if patron_lista_numerada.match(linea_limpia):
             p = documento.add_paragraph(style='List Number')
             procesar_linea_con_negritas(p, patron_lista_numerada.sub('', linea_limpia))
@@ -152,18 +162,13 @@ def generar_indice_word(documento, estructura_memoria):
 
 def mostrar_indice_desplegable(estructura, matices=None):
     """
-    Muestra una estructura de índice en Streamlit con apartados desplegables.
-    AHORA TAMBIÉN MUESTRA LAS INDICACIONES DE CADA SUBAPARTADO.
-
-    Args:
-        estructura (list): La lista de la clave 'estructura_memoria' del JSON.
-        matices (list, optional): La lista de la clave 'matices_desarrollo' del JSON.
+    Muestra una estructura de índice en Streamlit con apartados desplegables
+    y las indicaciones detalladas para cada subapartado.
     """
     if not estructura:
         st.warning("La estructura de la memoria está vacía.")
         return
 
-    # Creamos un diccionario para buscar las indicaciones de forma eficiente
     if not matices:
         matices = []
     matices_dict = {item.get('subapartado'): item.get('indicaciones', 'No se encontraron indicaciones.') for item in matices}
@@ -176,16 +181,12 @@ def mostrar_indice_desplegable(estructura, matices=None):
                 st.write("No hay subapartados.")
             else:
                 for subapartado in subapartados:
-                    # Muestra el título del subapartado
                     st.markdown(f" L &nbsp; **{subapartado}**")
-                    
-                    # Busca y muestra las indicaciones para este subapartado
                     indicaciones = matices_dict.get(subapartado)
                     if indicaciones:
                         with st.container(border=True):
                             st.info(indicaciones)
                     st.write("") # Un pequeño espacio para separar
-
 
 # =============================================================================
 #           FUNCIONES DE CONVERSIÓN HTML A IMAGEN
@@ -221,6 +222,7 @@ def html_a_imagen(html_string, output_filename="temp_image.png"):
     Convierte una cadena de HTML en una imagen PNG usando wkhtmltoimage.
     """
     try:
+        # Busca wkhtmltoimage en el PATH del sistema (funciona en Streamlit Cloud)
         path_wkhtmltoimage = os.popen('which wkhtmltoimage').read().strip()
         if not path_wkhtmltoimage:
             st.error("❌ 'wkhtmltoimage' no encontrado. Asegúrate de que 'wkhtmltopdf' está en packages.txt.")
@@ -232,5 +234,4 @@ def html_a_imagen(html_string, output_filename="temp_image.png"):
     except Exception as e:
         st.error(f"Error al convertir HTML a imagen: {e}")
         return None
-
 
