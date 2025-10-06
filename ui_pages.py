@@ -99,10 +99,7 @@ def project_selection_page(go_to_landing, go_to_phase1):
                     go_to_phase1(); st.rerun()
 
 # En ui_pages.py, añade esta nueva función
-
-# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión completa:
-
-# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión "a prueba de balas":
+# En ui_pages.py, reemplaza tu función phase_1_viability_page con esta versión final y robusta:
 
 def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     if not st.session_state.get('selected_project'):
@@ -116,7 +113,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.markdown(f"<h3>FASE 1: Análisis de Viabilidad y Requisitos</h3>", unsafe_allow_html=True)
     st.info(f"Estás trabajando en el proyecto: **{project_name}**")
     
-    # ... (El código para mostrar y subir archivos permanece igual) ...
     pliegos_folder_id = find_or_create_folder(service, "Pliegos", parent_id=project_folder_id)
     document_files = get_files_in_project(service, pliegos_folder_id)
     
@@ -150,35 +146,42 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
     st.header("Extracción de Requisitos Clave")
     
     if st.button("Analizar Pliegos y Extraer Requisitos", type="primary", use_container_width=True, disabled=not document_files):
-        with st.spinner("🧠 Analizando archivos con la IA... (Este método es más robusto)"):
+        with st.spinner("🧠 Analizando archivos con la IA..."):
             try:
-                # --- INICIO DEL NUEVO MÉTODO MEJORADO ---
                 idioma_seleccionado = st.session_state.get('project_language', 'Español')
                 prompt_con_idioma = PROMPT_REQUISITOS_CLAVE.format(idioma=idioma_seleccionado)
-                
-                # Preparamos el contenido para la IA: el prompt primero
                 contenido_ia = [prompt_con_idioma]
-
-                # Ahora, añadimos cada archivo directamente
-                for file in document_files:
-                    st.info(f"Enviando archivo a la IA: {file['name']}...")
-                    file_content_bytes = download_file_from_drive(service, file['id'])
-                    # La IA necesita el tipo de archivo (MIME type) y los datos
-                    contenido_ia.append({"mime_type": file['mimeType'], "data": file_content_bytes.getvalue()})
-
-                # Le pedimos a la IA que SU ÚNICA RESPUESTA sea un JSON
-                generation_config = {"response_mime_type": "application/json"}
                 
-                response = model.generate_content(contenido_ia, generation_config=generation_config)
-                # --- FIN DEL NUEVO MÉTODO MEJORADO ---
+                texto_extraido_docx = ""
 
-                # La respuesta ya debería ser un JSON limpio, pero mantenemos la validación por si acaso
+                for file in document_files:
+                    st.info(f"Procesando archivo: {file['name']}...")
+                    file_content_bytes = download_file_from_drive(service, file['id'])
+                    
+                    # Verificamos si es un PDF por su nombre, que es más fiable
+                    if file['name'].lower().endswith('.pdf'):
+                        # ¡ESTA ES LA CORRECCIÓN CLAVE! Usamos un mime_type fijo y conocido.
+                        contenido_ia.append({"mime_type": "application/pdf", "data": file_content_bytes.getvalue()})
+                    
+                    # Mantenemos la lógica para DOCX por si se usan en el futuro
+                    elif 'wordprocessingml' in file['mimeType']:
+                        try:
+                            doc = docx.Document(io.BytesIO(file_content_bytes.getvalue()))
+                            texto_de_este_docx = "\n".join(para.text for para in doc.paragraphs)
+                            texto_extraido_docx += f"\n\n--- CONTENIDO DE {file['name']} ---\n{texto_de_este_docx}"
+                        except Exception as e_docx:
+                            st.warning(f"No se pudo leer el archivo DOCX '{file['name']}'. Error: {e_docx}")
+                    
+                if texto_extraido_docx:
+                    contenido_ia.append(texto_extraido_docx)
+
+                generation_config = {"response_mime_type": "application/json"}
+                response = model.generate_content(contenido_ia, generation_config=generation_config)
+
                 if not response.candidates:
                     st.error("La IA no generó una respuesta. Puede deberse a filtros de seguridad."); st.stop()
 
-                # No necesitamos la función limpiar_respuesta_json porque la respuesta ya es JSON
                 respuesta_texto = response.text
-                
                 st.session_state.requisitos_extraidos = json.loads(respuesta_texto)
                 st.toast("✅ ¡Requisitos extraídos con éxito!")
                 st.rerun()
@@ -186,7 +189,6 @@ def phase_1_viability_page(model, go_to_project_selection, go_to_phase2):
             except Exception as e:
                 st.error(f"Ocurrió un error crítico durante el proceso: {e}")
                 st.error(f"Tipo de error: {type(e).__name__}")
-                # Si algo falla, es útil ver la respuesta cruda de la IA
                 if 'response' in locals():
                     with st.expander("🔍 Ver respuesta de la IA para depuración"):
                         st.write(response)
@@ -958,6 +960,7 @@ def phase_6_page(model, go_to_phase5, back_to_project_selection_and_cleanup):
     col_nav1, col_nav2 = st.columns(2)
     with col_nav1: st.button("← Volver a Fase 5", on_click=go_to_phase4, use_container_width=True)
     with col_nav2: st.button("↩️ Volver a Selección de Proyecto", on_click=back_to_project_selection_and_cleanup, use_container_width=True)
+
 
 
 
