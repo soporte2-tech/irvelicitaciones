@@ -108,6 +108,8 @@ def handle_full_regeneration(model):
         except Exception as e:
             st.error(f"Ocurrió un error durante la regeneración completa: {e}"); return False
 
+# app.py (Sección final corregida)
+
 # =============================================================================
 #                        LÓGICA PRINCIPAL (ROUTER)
 # =============================================================================
@@ -120,23 +122,38 @@ if not credentials:
     landing_page()
 else:
     # 3. Si hay credenciales, configura los servicios (una sola vez).
+    # Este bloque 'try-except' es para evitar que se reconfigure en cada rerun.
     try:
         if 'drive_service' not in st.session_state or st.session_state.drive_service is None:
             st.session_state.drive_service = build_drive_service(credentials)
+        
+        # Es buena práctica configurar esto también solo si no está ya hecho
+        if 'gemini_model' not in st.session_state:
+            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+            st.session_state.gemini_model = genai.GenerativeModel('models/gemini-1.5-pro-latest')
 
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        model = genai.GenerativeModel('models/gemini-1.5-pro-latest') # O el modelo que uses
+        model = st.session_state.gemini_model
+
     except Exception as e:
         st.error(f"Error en la configuración de servicios. Detalle: {e}")
+        # Limpiamos credenciales por si el error es de token inválido
+        del st.session_state['credentials']
+        st.button("Reintentar conexión", on_click=go_to_landing)
         st.stop()
         
-    # 4. Router: Llama a la función de la página actual según el estado,
-    #    PASANDO las funciones necesarias como argumentos.
+    # --- ¡CORRECCIÓN CLAVE! ---
+    # Si estamos autenticados pero la página de sesión sigue siendo 'landing',
+    # significa que acabamos de iniciar sesión. Forzamos el paso a la siguiente página.
+    if st.session_state.page == 'landing':
+        go_to_project_selection()
+        # Forzamos un rerun para que el router de abajo ya entre con la página correcta.
+        st.rerun()
+
+    # 4. Router: Llama a la función de la página actual según el estado.
     page = st.session_state.page
     
-    if page == 'landing':
-        landing_page() # landing_page no necesita nada
-    elif page == 'project_selection':
+    # Ya no necesitamos el 'if page == 'landing'' aquí porque la corrección de arriba lo maneja.
+    if page == 'project_selection':
         project_selection_page(go_to_landing, go_to_phase1)
     elif page == 'phase_1':
         phase_1_page(model, go_to_project_selection, go_to_phase1_results, handle_full_regeneration, back_to_project_selection_and_cleanup)
@@ -151,5 +168,6 @@ else:
     elif page == 'phase_5':
         phase_5_page(model, go_to_phase4, go_to_phase1, back_to_project_selection_and_cleanup)
     else:
-        st.error("Página no reconocida. Volviendo a la selección de proyecto.")
-        project_selection_page(go_to_landing, go_to_phase1)
+        st.error(f"Página '{page}' no reconocida. Volviendo a la selección de proyecto.")
+        go_to_project_selection()
+
